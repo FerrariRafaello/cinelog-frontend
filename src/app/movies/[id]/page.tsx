@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api"
 import { Movie, Review } from "@/types";
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner";
 
 
 export default function MoviePage() {
@@ -18,6 +19,8 @@ export default function MoviePage() {
     const [comment, setComment]=useState("");
     const [status, setStatus]=useState("");
     const [loading, setLoading]=useState(true);
+    const [checked, setChecked]=useState(false);
+    const [currentUserId, setCurrentUserId]=useState<number | null>(null)
 
 
     useEffect(() => {
@@ -26,10 +29,12 @@ export default function MoviePage() {
             router.push("/login");
             return;
         }
+        const payload=JSON.parse(atob(token.split(".")[1]));
+        setCurrentUserId(parseInt(payload.sub));
         fetchMovie();
         fetchReviews();
+        setChecked(true);
     }, [id]);
-
 
     async function fetchMovie() {
         try{
@@ -42,7 +47,6 @@ export default function MoviePage() {
         }
     }
 
-
     async function fetchReviews() {
         try{
             const resp=await api.get(`/v1/reviews/movie/${id}`);
@@ -51,7 +55,6 @@ export default function MoviePage() {
             setReviews([]);
         }
     }
-
 
     async function handleReview(e: React.SyntheticEvent) {
         e.preventDefault();
@@ -65,10 +68,9 @@ export default function MoviePage() {
             setComment("");
             fetchReviews();
         }catch{
-            alert("Error submitting review. You may have already reviewed this movie.");
+            toast.error("Error submitting review. You may have already reviewed this movie.");
         }
     }
-
 
     async function handleWatchlist() {
         try{
@@ -76,14 +78,20 @@ export default function MoviePage() {
                 tmdb_movie_id: Number(id),
                 status:status || "want_to_watch",
             });
-            alert("Added to watchlist!");
+            toast.error("Added to watchlist!");
         }catch{
-            alert("Already in your watchlist.")
+            toast.error("Already in your watchlist.")
         }
     }
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!movie) return null;
+    if (!checked) return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+      );
+
 
     return (
     <div className="min-h-screen bg-background">
@@ -156,7 +164,9 @@ export default function MoviePage() {
           {reviews.map((review) => (
             <div key={review.id} className="p-4 rounded-lg border border-border space-y-1">
               <div className="flex justify-between">
-                <span className="text-sm font-medium">User #{review.user_id}</span>
+                <span className="text-sm font-medium">
+                  {review.user_id === currentUserId ? "You" : `User #${review.user_id}`}
+                </span>
                 <span className="text-sm">⭐ {review.rating}/10</span>
               </div>
               {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
