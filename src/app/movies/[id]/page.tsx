@@ -21,7 +21,9 @@ export default function MoviePage() {
     const [status, setStatus]=useState("");
     const [loading, setLoading]=useState(true);
     const [checked, setChecked]=useState(false);
-    const [currentUserId, setCurrentUserId]=useState<number | null>(null)
+    const [currentUserId, setCurrentUserId]=useState<number | null>(null);
+    const [credits, setCredits]=useState<{cast:any[], crew:any[]}>({cast: [], crew: []});
+    const [trailer, setTrailer]=useState<string | null>(null);
 
 
     useEffect(() => {
@@ -35,6 +37,8 @@ export default function MoviePage() {
       setCurrentUserId(parseInt(payload.sub));
       fetchMovie();
       fetchReviews();
+      fetchCredits();
+      fetchVideos();
       setChecked(true);
     }, 50);
     return () => clearTimeout(timer);
@@ -88,13 +92,34 @@ export default function MoviePage() {
         }
     }
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    if (!movie) return null;
+    async function fetchCredits() {
+      try{
+        const resp=await api.get(`/v1/tmdb/movies/${id}/credits`);
+        setCredits(resp.data);
+      }catch{
+        setCredits({cast: [], crew: []});
+      }
+    }
+
+    async function fetchVideos() {
+      try{
+        const resp=await api.get(`/v1/tmdb/movies/${id}/videos`);
+        const yt=resp.data.results?.find(
+          (v:any) => v.type === "Trailer" && v.site === "YouTube"
+        );
+        setTrailer(yt ? yt.key : null);
+      }catch{
+        setTrailer(null);
+      }
+    }
+
     if (!checked) return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
-      );
+    );
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!movie) return null;
 
 
     return (
@@ -120,6 +145,27 @@ export default function MoviePage() {
             <h2 className="text-3xl font-bold">{movie.title}</h2>
             <p className="text-muted-foreground">{movie.overview}</p>
             <p className="text-sm">⭐ {movie.vote_average.toFixed(1)} · {movie.release_date?.slice(0, 4)}</p>
+            {movie.genres && movie.genres.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {movie.genres.map((g) => g.name).join(" · ")}
+              </p>
+            )}
+            {movie.runtime && (
+              <p className="text-sm text-muted-foreground">
+                {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}min
+              </p>
+            )}
+            {credits.crew && (
+              <p className="text-sm">
+                🎬 <span className="font-medium">Director:</span>{" "}
+                {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
+              </p>
+            )}
+            {trailer && (
+              <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
+                ▶ Watch Trailer
+              </a>
+            )}
             <div className="flex gap-2 pt-2">
               <select
                 value={status}
@@ -135,6 +181,31 @@ export default function MoviePage() {
             </div>
           </div>
         </div>
+
+        {credits.cast.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-xl font-semibold">Cast</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {credits.cast.slice(0, 10).map((actor) => (
+                <div key={actor.id} className="flex-shrink-0 text-center w-20">
+                  {actor.profile_path ? (
+                    <img
+                      src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                      alt={actor.name}
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                      No photo
+                    </div>
+                  )}
+                  <p className="text-xs font-medium mt-1 line-clamp-2">{actor.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1">{actor.character}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">Write a Review</h3>
