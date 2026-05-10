@@ -8,6 +8,7 @@ import { api } from "@/lib/api"
 import { Movie, Review } from "@/types";
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner";
+import { StarRating } from "@/components/StarRating";
 
 
 export default function MoviePage() {
@@ -138,16 +139,9 @@ export default function MoviePage() {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold">Write a Review</h3>
           <form onSubmit={handleReview} className="space-y-3">
-            <input
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-              placeholder="Rating (0-10)"
-              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm"
-              required
+            <StarRating
+              value={parseFloat(rating) || 0}
+              onChange={(val) => setRating(String(val))}
             />
             <textarea
               value={comment}
@@ -166,11 +160,11 @@ export default function MoviePage() {
           )}
           {reviews.map((review) => (
             <div key={review.id} className="p-4 rounded-lg border border-border space-y-1">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">
                   {review.user_id === currentUserId ? "You" : `User #${review.user_id}`}
                 </span>
-                <span className="text-sm">⭐ {review.rating}/10</span>
+                <StarRating value={review.rating} onChange={() => {}} readonly />
               </div>
               {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
             </div>
