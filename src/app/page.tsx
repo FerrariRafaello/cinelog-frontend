@@ -10,16 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 
-export default function HomePage() {
-  const router=useRouter();
-  const [query, setQuery]=useState("");
-  const [movies, setMovies]=useState<Movie[]>([]);
-  const [loading, setLoading]=useState(false);
-  const [checked, setChecked]=useState(false);
-  const [trending, setTrending]=useState<Movie[]>([]);
-  const [nowPlaying, setNowPlaying]=useState<Movie[]>([]);
+function HomeContent() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [trending, setTrending] = useState<Movie[]>([]);
+  const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -53,22 +56,33 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [router]);
 
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      setQuery(q);
+      api.get("/v1/tmdb/search", { params: { q } }).then((resp) => {
+        setMovies(resp.data.results);
+      });
+    }
+  }, [searchParams]);
+
   if (!checked) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="animate-pulse text-muted-foreground">Loading...</div>
-  </div>
+      <div className="animate-pulse text-muted-foreground">Loading...</div>
+    </div>
   );
 
   async function handleSearch(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
-    try{
-      const resp=await api.get("/v1/tmdb/search", { params: { q: query } });
+    router.push(`/?q=${encodeURIComponent(query)}`);
+    try {
+      const resp = await api.get("/v1/tmdb/search", { params: { q: query } });
       setMovies(resp.data.results);
-    }catch {
+    } catch {
       setMovies([]);
-    }finally{
+    } finally {
       setLoading(false);
     }
   }
@@ -201,5 +215,13 @@ export default function HomePage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
   );
 }
