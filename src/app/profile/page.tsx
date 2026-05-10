@@ -25,30 +25,32 @@ export default function MoviePage() {
 
 
     useEffect(() => {
-        const token = Cookies.get("token");
-        if (!token) {
-            router.push("/login");
-            return;
+    const timer = setTimeout(() => {
+      const token = Cookies.get("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const id = parseInt(payload.sub);
+      setUserId(id);
+
+      async function fetchUser(user_id: number) {
+        try {
+          const resp = await api.get(`/v1/users/${user_id}`);
+          setUserName(resp.data.name);
+        } catch {
+          setUserName("");
+        } finally {
+          setChecked(true);
         }
-        //Decode JWT to get user_id
-        const payload=JSON.parse(atob(token.split(".")[1]));
-        const id=parseInt(payload.sub);
-        setUserId(id);
-  
-        async function fetchUser(user_id: number) {
-          try{
-            const resp=await api.get(`/v1/users/${user_id}`);
-            setUserName(resp.data.name);
-          }catch {
-            setUserName("");
-          }finally{
-            setChecked(true);
-          }
-        }
-        fetchUser(id);
-        fetchReviews(id);
-        fetchWatchlist();
-    }, []);
+      }
+      fetchUser(id);
+      fetchReviews(id);
+      fetchWatchlist();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
     async function fetchReviews(id: number) {
       try{

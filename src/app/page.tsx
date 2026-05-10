@@ -22,32 +22,35 @@ export default function HomePage() {
   const [nowPlaying, setNowPlaying]=useState<Movie[]>([]);
 
   useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token) {
-      router.push("/login");
-    }else {
-      setChecked(true);
+    const timer = setTimeout(() => {
+      const token = Cookies.get("token");
+      if (!token) {
+        router.push("/login");
+      } else {
+        setChecked(true);
 
-      async function fetchTrending(){
-        try{
-          const resp=await api.get("/v1/tmdb/trending");
-          setTrending(resp.data.results);
-        }catch{
-          setTrending([]);
+        async function fetchTrending() {
+          try {
+            const resp = await api.get("/v1/tmdb/trending");
+            setTrending(resp.data.results);
+          } catch {
+            setTrending([]);
+          }
         }
-      }
 
-      async function fetchNowPlaying() {
-        try{
-          const resp=await api.get("/v1/tmdb/now-playing");
-          setNowPlaying(resp.data.results);
-        }catch{
-          setNowPlaying([]);
+        async function fetchNowPlaying() {
+          try {
+            const resp = await api.get("/v1/tmdb/now-playing");
+            setNowPlaying(resp.data.results);
+          } catch {
+            setNowPlaying([]);
+          }
         }
+        fetchTrending();
+        fetchNowPlaying();
       }
-      fetchTrending();
-      fetchNowPlaying();
-    }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [router]);
 
   if (!checked) return (

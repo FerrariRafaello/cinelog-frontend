@@ -24,17 +24,20 @@ export default function MoviePage() {
 
 
     useEffect(() => {
-        const token = Cookies.get("token");
-        if (!token) {
-            router.push("/login");
-            return;
-        }
-        const payload=JSON.parse(atob(token.split(".")[1]));
-        setCurrentUserId(parseInt(payload.sub));
-        fetchMovie();
-        fetchReviews();
-        setChecked(true);
-    }, [id]);
+    const timer = setTimeout(() => {
+      const token = Cookies.get("token");
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      setCurrentUserId(parseInt(payload.sub));
+      fetchMovie();
+      fetchReviews();
+      setChecked(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [id]);
 
     async function fetchMovie() {
         try{
