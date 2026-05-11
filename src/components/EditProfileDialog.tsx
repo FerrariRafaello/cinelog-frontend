@@ -79,10 +79,14 @@ export function EditProfileDialog({
 
   async function handleSave() {
     const data: Record<string, string> = {};
-    if (name !== currentName) data.name = name;
-    if (bio !== currentBio) data.bio = bio;
-    if (pronouns !== currentPronouns) data.pronouns = pronouns;
+    const normalizedName = name.trim();
+    const normalizedBio = bio.trim();
+    const normalizedPronouns = pronouns.trim();
     const genresStr = selectedGenres.join(", ");
+
+    if (normalizedName !== currentName) data.name = normalizedName;
+    if (normalizedBio !== currentBio) data.bio = normalizedBio;
+    if (normalizedPronouns !== currentPronouns) data.pronouns = normalizedPronouns;
     if (genresStr !== currentGenres) data.favorite_genres = genresStr;
     if (avatarId !== (currentAvatarId || "")) data.avatar_id = avatarId;
     if (coverId !== (currentCoverId || "")) data.cover_id = coverId;
@@ -93,11 +97,23 @@ export function EditProfileDialog({
     }
 
     try {
-      await api.patch(`/v1/users/${userId}`, data);
-      onSave(data);
+      const resp = await api.patch(`/v1/users/${userId}`, data);
+      onSave({
+        name: resp.data?.name,
+        bio: resp.data?.bio ?? "",
+        pronouns: resp.data?.pronouns ?? "",
+        favorite_genres: resp.data?.favorite_genres ?? "",
+        avatar_id: resp.data?.avatar_id ?? "",
+        cover_id: resp.data?.cover_id ?? "",
+      });
       toast.success("Profile updated!");
       setOpen(false);
-    } catch {
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 422) {
+        toast.error("Invalid profile data. Check name/bio and try again.");
+        return;
+      }
       toast.error("Error updating profile.");
     }
   }
