@@ -65,18 +65,6 @@ export default function MoviePage() {
   }, []);
 
 
-    async function handleUpdateProfile(data: {avatar_id?: string, cover_id?: string, bio?: string}) {
-        try {
-            await api.patch(`/v1/users/${userId}`, data);
-            if (data.avatar_id) setAvatarId(data.avatar_id);
-            if (data.cover_id) setCoverId(data.cover_id);
-            if (data.bio !== undefined) setBio(data.bio);
-            toast.success("Profile updated!");
-        } catch {
-            toast.error("Error updating profile.");
-        }
-    }
-
     function handleEditSave(data: {name?: string; bio?: string; pronouns?: string; favorite_genres?: string; avatar_id?: string; cover_id?: string;}) {
         if (data.name) setUserName(data.name);
         if (data.bio !== undefined) setBio(data.bio);

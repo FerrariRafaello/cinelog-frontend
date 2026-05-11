@@ -24,6 +24,7 @@ export default function MoviePage() {
     const [currentUserId, setCurrentUserId]=useState<number | null>(null);
     const [credits, setCredits]=useState<{cast:any[], crew:any[]}>({cast: [], crew: []});
     const [trailer, setTrailer]=useState<string | null>(null);
+    const [providers, setProviders]=useState<any[]>([]);
 
 
     useEffect(() => {
@@ -39,6 +40,7 @@ export default function MoviePage() {
       fetchReviews();
       fetchCredits();
       fetchVideos();
+      fetchProviders();
       setChecked(true);
     }, 50);
     return () => clearTimeout(timer);
@@ -63,6 +65,19 @@ export default function MoviePage() {
             setReviews([]);
         }
     }
+
+
+    async function fetchProviders() {
+      try{
+        const resp=await api.get(`/v1/tmdb/movies/${id}/providers`);
+        const br=resp.data.results?.BR;
+        const list=br?.flatrate || br?.rent || br?.buy || [];
+        setProviders(list);
+      }catch{
+        setProviders([]);
+      }
+    }
+
 
     async function handleReview(e: React.SyntheticEvent) {
         e.preventDefault();
@@ -138,7 +153,7 @@ export default function MoviePage() {
             <img
               src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
               alt={movie.title}
-              className="w-full sm:w-48 roudend-lg flex-shrink-0"
+              className="w-full sm:w-48 rounded-lg flex-shrink-0"
             />
           )}
           <div className="space-y-3">
@@ -204,6 +219,31 @@ export default function MoviePage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {providers.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Where to Watch</h3>
+            <div className="flex gap-3 flex-wrap">
+              {providers.map((p: any) => (
+                <a
+                  key={p.provider_id}
+                  href={`https://www.themoviedb.org/movie/${movie.id}/watch`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                >
+                  <img
+                    src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
+                    alt={p.provider_name}
+                    className="w-10 h-10 rounded-lg"
+                  />
+                  <p className="text-xs text-muted-foreground text-center w-14 line-clamp-1">{p.provider_name}</p>
+                </a>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">Powered by JustWatch</p>
           </div>
         )}
 
