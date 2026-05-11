@@ -8,8 +8,7 @@ import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog"
-import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
-import { CoverPickerDialog } from "@/components/CoverPickerDialog";
+import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
 
@@ -28,8 +27,8 @@ export default function MoviePage() {
     const [avatarId, setAvatarId]=useState<string | null>(null);
     const [coverId, setCoverId]=useState<string | null>(null);
     const [bio, setBio]=useState("");
-    const [editingBio, setEditingBio]=useState(false);
-    const [bioInput, setBioInput]=useState("");
+    const [pronouns, setPronouns]=useState("");
+    const [favoriteGenres, setFavoriteGenres]=useState("");
 
 
     useEffect(() => {
@@ -50,6 +49,8 @@ export default function MoviePage() {
           setAvatarId(resp.data.avatar_id);
           setCoverId(resp.data.cover_id);
           setBio(resp.data.bio || "");
+          setPronouns(resp.data.pronouns || "");
+          setFavoriteGenres(resp.data.favorite_genres || "");
         } catch {
           setUserName("");
         } finally {
@@ -74,6 +75,15 @@ export default function MoviePage() {
         } catch {
             toast.error("Error updating profile.");
         }
+    }
+
+    function handleEditSave(data: {name?: string; bio?: string; pronouns?: string; favorite_genres?: string; avatar_id?: string; cover_id?: string;}) {
+        if (data.name) setUserName(data.name);
+        if (data.bio !== undefined) setBio(data.bio);
+        if (data.pronouns !== undefined) setPronouns(data.pronouns);
+        if (data.favorite_genres !== undefined) setFavoriteGenres(data.favorite_genres);
+        if (data.avatar_id) setAvatarId(data.avatar_id);
+        if (data.cover_id) setCoverId(data.cover_id);
     }
 
 
@@ -182,54 +192,46 @@ export default function MoviePage() {
 
       {/* Cover + Avatar */}
       <div className="relative">
-        <CoverPickerDialog
-          currentId={coverId}
-          currentGradient={getCoverGradient(coverId)}
-          onSelect={(id: string) => handleUpdateProfile({ cover_id: id })}
-        />
+        <div className={`h-48 ${getCoverGradient(coverId)} w-full`} />
         <div className="absolute left-4 sm:left-8 -bottom-14">
-          <AvatarPickerDialog
-            currentId={avatarId}
-            userName={userName}
-            currentBg={getAvatarBg(avatarId)}
-            onSelect={(id: string) => handleUpdateProfile({ avatar_id: id })}
-          />
+          <div className={`w-28 h-28 rounded-full border-4 border-background ${getAvatarBg(avatarId)} flex items-center justify-center text-4xl font-bold text-white`}>
+            {userName.charAt(0).toUpperCase()}
+          </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-10 space-y-10">
         <div>
-          <h2 className="text-2xl font-bold">{userName || `User #${userId}`}</h2>
-          <p className="text-muted-foreground text-sm mt-1">{reviews.length} reviews · {watchlist.length} in watchlist</p>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold">{userName || `User #${userId}`}</h2>
+            {userId !== null && (
+              <EditProfileDialog
+                userId={userId}
+                currentName={userName}
+                currentBio={bio}
+                currentPronouns={pronouns}
+                currentGenres={favoriteGenres}
+                currentAvatarId={avatarId}
+                currentCoverId={coverId}
+                onSave={handleEditSave}
+              />
+            )}
+          </div>
+          {pronouns && <p className="text-muted-foreground text-sx mt-0.5">{pronouns}</p>}
+          <p className="text-muted-foreground text-base mt-0.5">{reviews.length} reviews · {watchlist.length} in watchlist</p>
 
           {/* Bio */}
-          {editingBio ? (
-            <div className="mt-3 flex gap-2 items-start max-w-md">
-              <textarea
-                value={bioInput}
-                onChange={(e) => setBioInput(e.target.value)}
-                maxLength={200}
-                className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm min-h-16"
-                placeholder="Tell us about yourself..."
-              />
-              <div className="flex flex-col gap-1">
-                <Button size="sm" onClick={() => {
-                  handleUpdateProfile({ bio: bioInput });
-                  setEditingBio(false);
-                }}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => {
-                  setEditingBio(false);
-                  setBioInput(bio);
-                }}>Cancel</Button>
-              </div>
+          {bio && <p className="text-base text-muted-foreground mt-0.5 max-w-md">{bio}</p>}
+
+          {/* Favorite Genres */}
+          {favoriteGenres && (
+            <div className="flex flex-wrap gap-1.5 mt-0.5">
+              {favoriteGenres.split(",").map((g) => g.trim()).filter(Boolean).map((genre) => (
+                <span key={genre} className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm font-medium">
+                  {genre}
+                </span>
+              ))}
             </div>
-          ) : (
-            <p
-              className="text-sm text-muted-foreground mt-2 cursor-pointer hover:text-foreground transition-colors max-w-md"
-              onClick={() => { setEditingBio(true); setBioInput(bio); }}
-            >
-              {bio || "Click to add a bio..."}
-            </p>
           )}
         </div>
 
