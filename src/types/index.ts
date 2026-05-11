@@ -31,6 +31,7 @@ export interface Review{
     tmdb_movie_id:number;
     rating:number;
     comment?:string;
+  likes:number;
     created_at:string;
 }
 

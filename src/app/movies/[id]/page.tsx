@@ -5,7 +5,7 @@ import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api"
-import { Movie, Review } from "@/types";
+import { Movie, Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner";
 import { StarRating } from "@/components/StarRating";
@@ -25,6 +25,8 @@ export default function MoviePage() {
     const [credits, setCredits]=useState<{cast:any[], crew:any[]}>({cast: [], crew: []});
     const [trailer, setTrailer]=useState<string | null>(null);
     const [providers, setProviders]=useState<any[]>([]);
+    const [inWatchlist, setInWatchlist]=useState(false);
+    const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
 
 
     useEffect(() => {
@@ -41,6 +43,7 @@ export default function MoviePage() {
       fetchCredits();
       fetchVideos();
       fetchProviders();
+      fetchWatchlistState();
       setChecked(true);
     }, 50);
     return () => clearTimeout(timer);
@@ -96,15 +99,72 @@ export default function MoviePage() {
     }
 
     async function handleWatchlist() {
+        if (inWatchlist) {
+            toast.info("Already in watchlist.");
+            return;
+        }
         try{
             await api.post("/v1/watchlist", {
                 tmdb_movie_id: Number(id),
                 status:status || "want_to_watch",
             });
-            toast.error("Added to watchlist!");
-        }catch{
-            toast.error("Already in your watchlist.")
+            toast.success("Added to watchlist!");
+            setInWatchlist(true);
+        }catch(error:any){
+            const message = String(error?.response?.data?.error?.message || "").toLowerCase();
+            if (message.includes("already") && message.includes("watchlist")) {
+              setInWatchlist(true);
+              toast.info("Already in watchlist.");
+              return;
+            }
+            toast.error("Could not add movie to watchlist.");
         }
+    }
+
+    async function fetchWatchlistState() {
+      try {
+        const resp = await api.get("/v1/watchlist");
+        const items: WatchlistItem[] = resp.data || [];
+        const currentMovieId = Number(id);
+        const existing = items.find((item) => Number(item.tmdb_movie_id) === currentMovieId);
+        setInWatchlist(Boolean(existing));
+        if (existing) {
+          setWatchlistItemId(existing.id);
+          setStatus(existing.status);
+        } else {
+          setWatchlistItemId(null);
+        }
+      } catch {
+        setInWatchlist(false);
+        setWatchlistItemId(null);
+      }
+    }
+
+    async function handleRemoveFromWatchlist() {
+      if (!watchlistItemId) {
+        toast.error("Could not remove from watchlist.");
+        return;
+      }
+
+      try {
+        await api.delete(`/v1/watchlist/${watchlistItemId}`);
+        setInWatchlist(false);
+        setWatchlistItemId(null);
+        setStatus("want_to_watch");
+        toast.success("Removed from watchlist.");
+      } catch {
+        toast.error("Could not remove from watchlist.");
+      }
+    }
+
+    async function handleLikeReview(reviewId: number) {
+      try {
+        const resp = await api.post(`/v1/reviews/${reviewId}/like`);
+        const updated = resp.data as Review;
+        setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
+      } catch {
+        toast.error("Could not register like.");
+      }
     }
 
     async function fetchCredits() {
@@ -231,7 +291,28 @@ export default function MoviePage() {
                     <option value="watched">Watched</option>
                     <option value="dropped">Dropped</option>
                   </select>
-                  <Button onClick={handleWatchlist} variant="outline" className="h-11 text-sm sm:text-base">Add to Watchlist</Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleWatchlist}
+                      variant="outline"
+                      disabled={inWatchlist}
+                      className="h-11 text-sm sm:text-base"
+                    >
+                      {inWatchlist ? "Already in watchlist" : "Add to Watchlist"}
+                    </Button>
+                    {inWatchlist && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={handleRemoveFromWatchlist}
+                        className="h-11 w-11 rounded-lg border border-border/70 text-destructive hover:bg-destructive/10"
+                        aria-label="Remove from watchlist"
+                        title="Remove from watchlist"
+                      >
+                        X
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -328,6 +409,13 @@ export default function MoviePage() {
                 <StarRating value={review.rating} onChange={() => {}} readonly />
               </div>
               {review.comment && <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{review.comment}</p>}
+              <button
+                type="button"
+                onClick={() => handleLikeReview(review.id)}
+                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs sm:text-sm font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+              >
+                👍 {review.likes}
+              </button>
             </div>
           ))}
         </section>

@@ -30,11 +30,11 @@ export default function LoginPage() {
     }
     return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.75_0.15_55_/_0.18),transparent_45%),radial-gradient(circle_at_80%_30%,oklch(0.65_0.12_200_/_0.18),transparent_45%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,oklch(0.08_0.005_285_/_0.9)_70%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.84_0.16_55_/_0.28),transparent_48%),radial-gradient(circle_at_80%_30%,oklch(0.78_0.14_200_/_0.26),transparent_48%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,oklch(0.18_0.015_285_/_0.35),oklch(0.10_0.008_285_/_0.55)_72%)]" />
 
       <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-md shadow-2xl">
+        <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/92 backdrop-blur-md shadow-2xl">
           <div className="text-center space-y-1">
             <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Welcome back</p>
             <h1 className="text-4xl font-bold tracking-tight">Cinelog</h1>
