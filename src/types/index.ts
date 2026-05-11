@@ -1,9 +1,14 @@
-export interface User{
-    id:number;
-    name:string;
-    age:number;
-    email:string;
-    cpf:string;
+export interface User {
+  id: number;
+  name: string;
+  age: number;
+  email: string;
+  cpf: string;
+  bio?: string;
+  pronouns?: string;
+  favorite_genres?: string;
+  avatar_id?: string;
+  cover_id?: string;
 }
 
 
