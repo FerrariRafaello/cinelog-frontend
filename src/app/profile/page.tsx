@@ -4,6 +4,7 @@
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
 
 
-export default function MoviePage() {
+function ProfileContent() {
     const router=useRouter();
   const searchParams = useSearchParams();
     const [reviews, setReviews]=useState<Review[]>([]);
@@ -373,5 +374,13 @@ export default function MoviePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense>
+      <ProfileContent />
+    </Suspense>
   );
 }
