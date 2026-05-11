@@ -21,7 +21,13 @@ export function LogoutDialog() {
     return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Sign out</Button>
+        <Button
+          variant="ghost"
+          className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 backdrop-blur-sm px-2 py-2 pr-4 text-sm sm:text-base font-semibold text-foreground shadow-md hover:border-primary/60 hover:bg-card transition-colors"
+        >
+          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-primary/20 text-primary group-hover:bg-primary/30 transition-colors">⎋</span>
+          Sign out
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

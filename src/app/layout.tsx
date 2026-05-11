@@ -24,6 +24,11 @@ export const viewport={
 export const metadata: Metadata = {
   title: "Cinelog",
   description: "Movie rating platform",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

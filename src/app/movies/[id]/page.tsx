@@ -139,116 +139,166 @@ export default function MoviePage() {
 
     return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-sm text-muted-foreground hover:text-foreground">
-          ← Back
+      <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 flex justify-between items-center">
+        <button
+          onClick={() => router.back()}
+          className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 backdrop-blur-sm px-2 py-2 pr-4 text-sm sm:text-base font-semibold text-foreground shadow-md hover:border-primary/60 hover:bg-card transition-colors"
+        >
+          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-primary/20 text-primary group-hover:bg-primary/30 transition-colors">←</span>
+          Back
         </button>
-        <h1 className="text-xl font-bold">Cinelog</h1>
-        <Button variant="ghost" onClick={() => router.push("/profile")}>Profile</Button>
+        <h1 className="text-2xl font-bold tracking-tight">Cinelog</h1>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button
+            variant="ghost"
+            className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+            onClick={() => router.push("/")}
+          >
+            Home
+          </Button>
+          <Button
+            variant="ghost"
+            className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+            onClick={() => router.push("/profile")}
+          >
+            Profile
+          </Button>
+        </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
-        <div className="flex flex-col sm:flex-row gap-6">
-          {movie.poster_path && (
-            <img
-              src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-              alt={movie.title}
-              className="w-full sm:w-48 rounded-lg flex-shrink-0"
+      {/* Hero + Movie Header */}
+      <div className={`relative ${movie.poster_path ? "min-h-[64vh] sm:min-h-[72vh] overflow-hidden" : ""}`}>
+        {movie.poster_path && (
+          <>
+            <div
+              className="absolute inset-0 scale-110"
+              style={{
+                backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.poster_path})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                filter: "blur(24px) brightness(0.25)",
+              }}
             />
-          )}
-          <div className="space-y-3">
-            <h2 className="text-3xl font-bold">{movie.title}</h2>
-            <p className="text-muted-foreground">{movie.overview}</p>
-            <p className="text-sm">⭐ {movie.vote_average.toFixed(1)} · {movie.release_date?.slice(0, 4)}</p>
-            {movie.genres && movie.genres.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {movie.genres.map((g) => g.name).join(" · ")}
-              </p>
-            )}
-            {movie.runtime && (
-              <p className="text-sm text-muted-foreground">
-                {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}min
-              </p>
-            )}
-            {credits.crew && (
-              <p className="text-sm">
-                🎬 <span className="font-medium">Director:</span>{" "}
-                {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
-              </p>
-            )}
-            {trailer && (
-              <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors">
-                ▶ Watch Trailer
-              </a>
-            )}
-            <div className="flex gap-2 pt-2">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="px-3 py-2 rounded-md border border-input bg-background text-sm"
-              >
-                <option value="want_to_watch">Want to watch</option>
-                <option value="watching">Watching</option>
-                <option value="watched">Watched</option>
-                <option value="dropped">Dropped</option>
-              </select>
-              <Button onClick={handleWatchlist} variant="outline">Add to Watchlist</Button>
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          </>
+        )}
+
+        <div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-8 ${movie.poster_path ? "pt-8 sm:pt-10 pb-16 sm:pb-20" : "py-8 sm:py-10"}`}>
+          <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-xl p-4 sm:p-6">
+            <div className="flex flex-col lg:flex-row gap-5 sm:gap-7">
+              {movie.poster_path && (
+                <div className="w-56 sm:w-64 lg:w-72 aspect-[4/5] mx-auto lg:mx-0 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-border/40 shadow-lg">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                    alt={movie.title}
+                    className="w-full h-full object-cover object-center"
+                  />
+                </div>
+              )}
+              <div className="space-y-4 flex-1">
+                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">{movie.title}</h2>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{movie.overview}</p>
+                <p className="text-base sm:text-lg font-semibold">⭐ {movie.vote_average.toFixed(1)} · {movie.release_date?.slice(0, 4)}</p>
+                {movie.genres && movie.genres.length > 0 && (
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    {movie.genres.map((g) => g.name).join(" · ")}
+                  </p>
+                )}
+                {movie.runtime && (
+                  <p className="text-sm sm:text-base text-muted-foreground">
+                    {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}min
+                  </p>
+                )}
+                {credits.crew && (
+                  <p className="text-sm sm:text-base">
+                    🎬 <span className="font-medium">Director:</span>{" "}
+                    {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
+                  </p>
+                )}
+                {trailer && (
+                  <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
+                    ▶ Watch Trailer
+                  </a>
+                )}
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base sm:min-w-52"
+                  >
+                    <option value="want_to_watch">Want to watch</option>
+                    <option value="watching">Watching</option>
+                    <option value="watched">Watched</option>
+                    <option value="dropped">Dropped</option>
+                  </select>
+                  <Button onClick={handleWatchlist} variant="outline" className="h-11 text-sm sm:text-base">Add to Watchlist</Button>
+                </div>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
+      </div>
+
+      <main className="relative z-20 -mt-16 sm:-mt-24 max-w-6xl mx-auto px-4 sm:px-8 pb-10 sm:pb-12 space-y-8 sm:space-y-10">
 
         {credits.cast.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="text-xl font-semibold">Cast</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2">
+          <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
+            <h3 className="text-2xl font-bold tracking-tight">Cast</h3>
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
               {credits.cast.slice(0, 10).map((actor) => (
-                <div key={actor.id} className="flex-shrink-0 text-center w-20">
+                <a
+                  key={actor.id}
+                  href={`https://www.google.com/search?q=${encodeURIComponent(`${actor.name} actor`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 text-center w-24 sm:w-28 snap-start hover:opacity-90 transition-opacity"
+                >
                   {actor.profile_path ? (
                     <img
                       src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
                       alt={actor.name}
-                      className="w-20 h-20 rounded-full object-cover"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
                       No photo
                     </div>
                   )}
-                  <p className="text-xs font-medium mt-1 line-clamp-2">{actor.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{actor.character}</p>
-                </div>
+                  <p className="text-sm font-medium mt-1 line-clamp-2">{actor.name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">{actor.character}</p>
+                </a>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {providers.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Where to Watch</h3>
-            <div className="flex gap-3 flex-wrap">
+          <section className="space-y-3 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
+            <h3 className="text-2xl font-bold tracking-tight">Where to Watch</h3>
+            <div className="flex gap-4 flex-wrap">
               {providers.map((p: any) => (
                 <a
                   key={p.provider_id}
                   href={`https://www.themoviedb.org/movie/${movie.id}/watch`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center gap-1 hover:scale-110 transition-transform"
+                  className="flex flex-col items-center gap-1.5 hover:scale-110 transition-transform"
                 >
                   <img
                     src={`https://image.tmdb.org/t/p/w45${p.logo_path}`}
                     alt={p.provider_name}
-                    className="w-10 h-10 rounded-lg"
+                    className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg"
                   />
-                  <p className="text-xs text-muted-foreground text-center w-14 line-clamp-1">{p.provider_name}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground text-center w-20 line-clamp-2">{p.provider_name}</p>
                 </a>
               ))}
             </div>
             <p className="text-xs text-muted-foreground">Powered by JustWatch</p>
-          </div>
+          </section>
         )}
 
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Write a Review</h3>
+        <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
+          <h3 className="text-2xl font-bold tracking-tight">Write a Review</h3>
           <form onSubmit={handleReview} className="space-y-3">
             <StarRating
               value={parseFloat(rating) || 0}
@@ -258,29 +308,29 @@ export default function MoviePage() {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Write your review... (optional)"
-              className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm min-h-24"
+              className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base min-h-24"
             />
-            <Button type="submit">Submit Review</Button>
+            <Button type="submit" className="h-11 text-sm sm:text-base">Submit Review</Button>
           </form>
-        </div>
+        </section>
 
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Reviews ({reviews.length})</h3>
+        <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
+          <h3 className="text-2xl font-bold tracking-tight">Reviews ({reviews.length})</h3>
           {reviews.length === 0 && (
-            <p className="text-muted-foreground">No reviews yet. Be the first!</p>
+            <p className="text-muted-foreground text-sm sm:text-base">No reviews yet. Be the first!</p>
           )}
           {reviews.map((review) => (
-            <div key={review.id} className="p-4 rounded-lg border border-border space-y-1">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
+            <div key={review.id} className="p-4 rounded-xl border border-border space-y-2 bg-background/70">
+              <div className="flex justify-between items-center gap-2">
+                <span className="text-sm sm:text-base font-medium">
                   {review.user_id === currentUserId ? "You" : `User #${review.user_id}`}
                 </span>
                 <StarRating value={review.rating} onChange={() => {}} readonly />
               </div>
-              {review.comment && <p className="text-sm text-muted-foreground">{review.comment}</p>}
+              {review.comment && <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{review.comment}</p>}
             </div>
           ))}
-        </div>
+        </section>
       </main>
     </div>
   );

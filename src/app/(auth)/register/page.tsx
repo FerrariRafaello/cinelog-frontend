@@ -112,11 +112,16 @@ export default function RegisterPage() {
     }
 
      return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 rounded-xl border border-border bg-card shadow-sm">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Cinelog</h1>
-          <p className="text-muted-foreground mt-1">Create your account</p>
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,oklch(0.75_0.15_55_/_0.18),transparent_45%),radial-gradient(circle_at_15%_65%,oklch(0.65_0.12_200_/_0.18),transparent_45%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,oklch(0.08_0.005_285_/_0.92)_70%)]" />
+
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-md shadow-2xl">
+        <div className="text-center space-y-1">
+          <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Join the club</p>
+          <h1 className="text-4xl font-bold tracking-tight">Cinelog</h1>
+          <p className="text-muted-foreground mt-1 text-base">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,7 +132,7 @@ export default function RegisterPage() {
               name="name"
               value={form.name}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Your name"
               required
             />
@@ -143,7 +148,7 @@ export default function RegisterPage() {
                 const age = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
                 setForm({ ...form, age: String(age) });
               }}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               required
             />
             {form.age && parseInt(form.age) < 16 && (
@@ -158,7 +163,7 @@ export default function RegisterPage() {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="your@email.com"
               required
             />
@@ -174,7 +179,7 @@ export default function RegisterPage() {
               name="cpf"
               value={form.cpf}
               onChange={handleChange}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="000.000.000-00"
             />
           </div>
@@ -187,14 +192,14 @@ export default function RegisterPage() {
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring pr-16"
+                className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring pr-16"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground hover:text-foreground"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -208,17 +213,18 @@ export default function RegisterPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
             {loading ? "Creating account..." : "Sign up"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a href="/login" className="text-primary hover:underline">
+          <a href="/login" className="text-primary hover:underline font-medium">
             Sign in
           </a>
         </p>
+      </div>
       </div>
     </div>
   );

@@ -29,51 +29,57 @@ export default function LoginPage() {
         }
     }
     return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md p-8 space-y-6 rounded-xl border border-border bg-card shadow-sm">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold">Cinelog</h1>
-          <p className="text-muted-foreground mt-1">Sing in</p>
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.75_0.15_55_/_0.18),transparent_45%),radial-gradient(circle_at_80%_30%,oklch(0.65_0.12_200_/_0.18),transparent_45%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,oklch(0.08_0.005_285_/_0.9)_70%)]" />
+
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-md shadow-2xl">
+          <div className="text-center space-y-1">
+            <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Welcome back</p>
+            <h1 className="text-4xl font-bold tracking-tight">Cinelog</h1>
+            <p className="text-muted-foreground mt-1 text-base">Sign in to continue</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+              {loading ? "Initiating..." : "Sign in"}
+            </Button>
+          </form>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have account?{" "}
+            <a href="/register" className="text-primary hover:underline font-medium">
+              Sign up
+            </a>
+          </p>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Initiating..." : "Sing in"}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have account?{" "}
-          <a href="/register" className="text-primary hover:underline">
-            Sign up
-          </a>
-        </p>
       </div>
     </div>
   );

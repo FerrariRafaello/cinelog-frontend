@@ -31,11 +31,11 @@ export function StarRating({ value, onChange, readonly = false }: StarRatingProp
   }
 
   if (readonly) {
-  return <span className="text-sm">⭐ {value}/10</span>;
+  return <span className="text-base sm:text-lg font-medium">⭐ {value}/10</span>;
 }
 
 return (
-  <div className="flex gap-1 items-center">
+  <div className="flex gap-1.5 items-center">
     {stars.map((star) => {
       const full = display >= star * 2;
       const half = !full && display >= star * 2 - 1;
@@ -48,19 +48,19 @@ return (
           onClick={(e) => handleClick(e, star)}
           onMouseMove={(e) => handleMouseMove(e, star)}
           onMouseLeave={() => !readonly && setHovered(0)}
-          className="text-2xl focus:outline-none disabled:cursor-default relative w-7"
+          className="relative h-8 w-8 focus:outline-none disabled:cursor-default"
         >
-          <span className="text-muted-foreground">★</span>
+          <span className="absolute inset-0 flex items-center justify-center text-3xl leading-none text-muted-foreground">★</span>
           <span
-            className="absolute inset-0 overflow-hidden text-yellow-400"
+            className="absolute inset-y-0 left-0 overflow-hidden"
             style={{ width: full ? "100%" : half ? "50%" : "0%" }}
           >
-            ★
+            <span className="flex h-full w-8 items-center justify-center text-3xl leading-none text-yellow-400">★</span>
           </span>
         </button>
       );
     })}
-    <span className="text-sm text-muted-foreground ml-1">
+    <span className="text-base text-muted-foreground ml-1">
       {display > 0 ? `${display}/10` : ""}
     </span>
   </div>
