@@ -187,7 +187,7 @@ export default function MoviePage() {
           currentGradient={getCoverGradient(coverId)}
           onSelect={(id: string) => handleUpdateProfile({ cover_id: id })}
         />
-        <div className="absolute left-8 -bottom-14">
+        <div className="absolute left-4 sm:left-8 -bottom-14">
           <AvatarPickerDialog
             currentId={avatarId}
             userName={userName}
@@ -197,7 +197,7 @@ export default function MoviePage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 pt-20 pb-10 space-y-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-10 space-y-10">
         <div>
           <h2 className="text-2xl font-bold">{userName || `User #${userId}`}</h2>
           <p className="text-muted-foreground text-sm mt-1">{reviews.length} reviews · {watchlist.length} in watchlist</p>

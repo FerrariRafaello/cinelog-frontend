@@ -124,7 +124,7 @@ export default function MoviePage() {
 
     return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-6 py-4 flex justify-between items-center">
+      <nav className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
         <button onClick={() => router.back()} className="text-sm text-muted-foreground hover:text-foreground">
           ← Back
         </button>
@@ -133,12 +133,12 @@ export default function MoviePage() {
       </nav>
 
       <main className="max-w-4xl mx-auto px-6 py-10 space-y-8">
-        <div className="flex gap-6">
+        <div className="flex flex-col sm:flex-row gap-6">
           {movie.poster_path && (
             <img
               src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
               alt={movie.title}
-              className="w-48 rounded-lg flex-shrink-0"
+              className="w-full sm:w-48 roudend-lg flex-shrink-0"
             />
           )}
           <div className="space-y-3">

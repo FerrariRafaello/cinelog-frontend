@@ -22,6 +22,7 @@ function HomeContent() {
   const [checked, setChecked] = useState(false);
   const [trending, setTrending] = useState<Movie[]>([]);
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
+  const [topRated, setTopRated]=useState<Movie[]>([])
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -49,8 +50,18 @@ function HomeContent() {
             setNowPlaying([]);
           }
         }
+
+        async function fetchTopRated() {
+          try {
+            const resp=await api.get("/v1/tmdb/top-rated");
+            setTopRated(resp.data.results)
+          }catch {
+            setTopRated([]);
+          }
+        }
         fetchTrending();
         fetchNowPlaying();
+        fetchTopRated();
       }
     }, 50);
     return () => clearTimeout(timer);
@@ -88,7 +99,7 @@ function HomeContent() {
   }
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-6 py-4 flex justify-between items-center">
+      <nav className="border-b border-border px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
         <h1 className="text-xl font-bold">Cinelog</h1>
         <div className="flex gap-3">
           <Button variant="ghost" onClick={() => router.push("/profile")}>
@@ -98,7 +109,7 @@ function HomeContent() {
         </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-6 py-10 space-y-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-10">
         <form onSubmit={handleSearch} className="flex gap-3">
           <Input
             value={query}
@@ -147,67 +158,100 @@ function HomeContent() {
         {movies.length === 0 && (
           <>
             {trending.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h2 className="text-xl font-semibold">🔥 Trending This Week</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {trending.slice(0, 8).map((movie) => (
-                    <div
-                      key={movie.id}
-                      className="cursor-pointer rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow"
-                      onClick={() => router.push(`/movies/${movie.id}`)}
-                    >
-                      {movie.poster_path ? (
-                        <img
-                          src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                          alt={movie.title}
-                          className="w-full aspect-[2/3] object-cover"
-                        />
-                      ) : (
-                        <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                          No image
+                <div className="overflow-x-auto pb-2">
+                  <div className="grid grid-rows-2 grid-flow-col gap-3 auto-cols-[7rem] sm:auto-cols-[8rem]">
+                    {trending.map((movie) => (
+                      <div
+                        key={movie.id}
+                        className="cursor-pointer rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow"
+                        onClick={() => router.push(`/movies/${movie.id}`)}
+                      >
+                        {movie.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
+                            alt={movie.title}
+                            className="w-full aspect-[2/3] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            No image
+                          </div>
+                        )}
+                        <div className="p-1.5">
+                          <p className="text-xs font-medium line-clamp-1">{movie.title}</p>
+                          <p className="text-xs text-muted-foreground">⭐ {movie.vote_average.toFixed(1)}</p>
                         </div>
-                      )}
-                      <div className="p-2">
-                        <p className="text-sm font-medium line-clamp-2">{movie.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          ⭐ {movie.vote_average.toFixed(1)}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
 
             {nowPlaying.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h2 className="text-xl font-semibold">🎬 Now Playing</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {nowPlaying.slice(0, 8).map((movie) => (
-                    <div
-                      key={movie.id}
-                      className="cursor-pointer rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow"
-                      onClick={() => router.push(`/movies/${movie.id}`)}
-                    >
-                      {movie.poster_path ? (
-                        <img
-                          src={`https://image.tmdb.org/t/p/w300${movie.poster_path}`}
-                          alt={movie.title}
-                          className="w-full aspect-[2/3] object-cover"
-                        />
-                      ) : (
-                        <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                          No image
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-3" style={{ width: "max-content" }}>
+                    {nowPlaying.map((movie) => (
+                      <div
+                        key={movie.id}
+                        className="w-28 sm:w-32 flex-shrink-0 cursor-pointer rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow"
+                        onClick={() => router.push(`/movies/${movie.id}`)}
+                      >
+                        {movie.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
+                            alt={movie.title}
+                            className="w-full aspect-[2/3] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            No image
+                          </div>
+                        )}
+                        <div className="p-1.5">
+                          <p className="text-xs font-medium line-clamp-1">{movie.title}</p>
+                          <p className="text-xs text-muted-foreground">⭐ {movie.vote_average.toFixed(1)}</p>
                         </div>
-                      )}
-                      <div className="p-2">
-                        <p className="text-sm font-medium line-clamp-2">{movie.title}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          ⭐ {movie.vote_average.toFixed(1)}
-                        </p>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {topRated.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xl font-semibold">🏆 Worth Watching Again</h2>
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-3" style={{ width: "max-content" }}>
+                    {topRated.map((movie) => (
+                      <div
+                        key={movie.id}
+                        className="w-28 sm:w-32 flex-shrink-0 cursor-pointer rounded-lg border border-border overflow-hidden hover:shadow-md transition-shadow"
+                        onClick={() => router.push(`/movies/${movie.id}`)}
+                      >
+                        {movie.poster_path ? (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w185${movie.poster_path}`}
+                            alt={movie.title}
+                            className="w-full aspect-[2/3] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                            No image
+                          </div>
+                        )}
+                        <div className="p-1.5">
+                          <p className="text-xs font-medium line-clamp-1">{movie.title}</p>
+                          <p className="text-xs text-muted-foreground">⭐ {movie.vote_average.toFixed(1)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
