@@ -10,6 +10,14 @@ import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog"
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
 
@@ -32,6 +40,8 @@ function ProfileContent() {
     const [bio, setBio]=useState("");
     const [pronouns, setPronouns]=useState("");
     const [favoriteGenres, setFavoriteGenres]=useState("");
+    const [deleteOpen, setDeleteOpen]=useState(false);
+    const [deletingProfile, setDeletingProfile]=useState(false);
 
 
     useEffect(() => {
@@ -175,6 +185,25 @@ function ProfileContent() {
       }
     }
 
+    async function handleDeleteProfile() {
+      if (!viewerUserId) {
+        toast.error("Could not delete profile.");
+        return;
+      }
+
+      setDeletingProfile(true);
+      try {
+        await api.delete(`/v1/users/${viewerUserId}`);
+        Cookies.remove("token");
+        setDeleteOpen(false);
+        router.push("/login");
+      } catch {
+        toast.error("Could not delete profile.");
+      } finally {
+        setDeletingProfile(false);
+      }
+    }
+
 
     if (!checked) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
@@ -217,16 +246,26 @@ function ProfileContent() {
               {pronouns && <p className="text-muted-foreground text-base mt-1">{pronouns}</p>}
             </div>
             {isOwnProfile && viewerUserId !== null && (
-              <EditProfileDialog
-                userId={viewerUserId}
-                currentName={userName}
-                currentBio={bio}
-                currentPronouns={pronouns}
-                currentGenres={favoriteGenres}
-                currentAvatarId={avatarId}
-                currentCoverId={coverId}
-                onSave={handleEditSave}
-              />
+              <div className="flex items-center gap-2">
+                <EditProfileDialog
+                  userId={viewerUserId}
+                  currentName={userName}
+                  currentBio={bio}
+                  currentPronouns={pronouns}
+                  currentGenres={favoriteGenres}
+                  currentAvatarId={avatarId}
+                  currentCoverId={coverId}
+                  onSave={handleEditSave}
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="h-10"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  Delete Profile
+                </Button>
+              </div>
             )}
           </div>
 
@@ -373,6 +412,25 @@ function ProfileContent() {
         </div>
         )}
       </div>
+
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Profile</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete your profile?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteOpen(false)} disabled={deletingProfile}>
+              No
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteProfile} disabled={deletingProfile}>
+              {deletingProfile ? "Deleting..." : "Yes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
