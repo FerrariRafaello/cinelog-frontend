@@ -27,6 +27,7 @@ export default function MoviePage() {
     const [providers, setProviders]=useState<any[]>([]);
     const [inWatchlist, setInWatchlist]=useState(false);
     const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
+    const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});
 
 
     useEffect(() => {
@@ -63,10 +64,33 @@ export default function MoviePage() {
     async function fetchReviews() {
         try{
             const resp=await api.get(`/v1/reviews/movie/${id}`);
-            setReviews(resp.data);
+            const loadedReviews: Review[] = resp.data || [];
+            setReviews(loadedReviews);
+            fetchReviewerNames(loadedReviews.map((r) => r.user_id));
         }catch{
             setReviews([]);
         }
+    }
+
+    async function fetchReviewerNames(userIds: number[]) {
+      const uniqueIds = Array.from(new Set(userIds)).filter((uid) => !reviewerNames[uid]);
+      if (uniqueIds.length === 0) return;
+
+      const entries = await Promise.all(
+        uniqueIds.map(async (uid) => {
+          try {
+            const resp = await api.get(`/v1/users/${uid}`);
+            return [uid, resp.data?.name || `User #${uid}`] as const;
+          } catch {
+            return [uid, `User #${uid}`] as const;
+          }
+        })
+      );
+
+      setReviewerNames((prev) => ({
+        ...prev,
+        ...Object.fromEntries(entries),
+      }));
     }
 
 
@@ -162,7 +186,12 @@ export default function MoviePage() {
         const resp = await api.post(`/v1/reviews/${reviewId}/like`);
         const updated = resp.data as Review;
         setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
-      } catch {
+      } catch(error:any) {
+        if (error?.response?.status === 409) {
+          toast.info("You already liked this review.");
+          setReviews((prev) => prev.map((r) => (r.id === reviewId ? { ...r, liked_by_me: true } : r)));
+          return;
+        }
         toast.error("Could not register like.");
       }
     }
@@ -409,7 +438,7 @@ export default function MoviePage() {
                   className="text-sm sm:text-base font-medium hover:underline"
                   title="View profile"
                 >
-                  {review.user_id === currentUserId ? "You" : `User #${review.user_id}`}
+                  {review.user_id === currentUserId ? "You" : (reviewerNames[review.user_id] || `User #${review.user_id}`)}
                 </button>
                 <StarRating value={review.rating} onChange={() => {}} readonly />
               </div>
@@ -417,7 +446,8 @@ export default function MoviePage() {
               <button
                 type="button"
                 onClick={() => handleLikeReview(review.id)}
-                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs sm:text-sm font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+                disabled={Boolean(review.liked_by_me)}
+                className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs sm:text-sm font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 👍 {review.likes}
               </button>
