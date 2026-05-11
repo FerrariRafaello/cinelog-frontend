@@ -108,17 +108,31 @@ export default function MoviePage() {
 
     async function handleReview(e: React.SyntheticEvent) {
         e.preventDefault();
+      const numericRating = parseFloat(rating);
+      if (!Number.isFinite(numericRating) || numericRating <= 0) {
+        toast.error("Select a rating before submitting your review.");
+        return;
+      }
         try{
             await api.post("/v1/reviews", {
                 tmdb_movie_id: Number(id),
-                rating: parseFloat(rating),
+          rating: numericRating,
                 comment: comment || undefined,
             });
             setRating("");
             setComment("");
-            fetchReviews();
-        }catch{
-            toast.error("Error submitting review. You may have already reviewed this movie.");
+        await fetchReviews();
+        toast.success("Review submitted.");
+      }catch(error:any){
+        if (error?.response?.status === 409) {
+          toast.error("You have already reviewed this movie.");
+          return;
+        }
+        if (error?.response?.status === 422) {
+          toast.error("Invalid review data. Check the rating and try again.");
+          return;
+        }
+        toast.error("Could not submit review.");
         }
     }
 
@@ -436,7 +450,13 @@ export default function MoviePage() {
               placeholder="Write your review... (optional)"
               className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base min-h-24"
             />
-            <Button type="submit" className="h-11 text-sm sm:text-base">Submit Review</Button>
+            <Button
+              type="submit"
+              disabled={!Number.isFinite(parseFloat(rating)) || parseFloat(rating) <= 0}
+              className="h-11 text-sm sm:text-base"
+            >
+              Submit Review
+            </Button>
           </form>
         </section>
 
