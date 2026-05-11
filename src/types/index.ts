@@ -22,6 +22,7 @@ export interface Movie {
   vote_average: number;
   genres?: Genre[];
   runtime?: number;
+  imdb_id?: string;
 }
 
 

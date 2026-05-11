@@ -27,7 +27,7 @@ export default function MoviePage() {
     const [providers, setProviders]=useState<any[]>([]);
     const [inWatchlist, setInWatchlist]=useState(false);
     const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
-    const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});
+    const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
 
     useEffect(() => {
@@ -225,6 +225,10 @@ export default function MoviePage() {
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!movie) return null;
 
+    const imdbPlayUrl = movie.imdb_id
+      ? `https://www.playimdb.com/title/${movie.imdb_id}/`
+      : null;
+
 
     return (
     <div className="min-h-screen bg-background">
@@ -304,11 +308,23 @@ export default function MoviePage() {
                     {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
                   </p>
                 )}
-                {trailer && (
-                  <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
-                    ▶ Watch Trailer
-                  </a>
-                )}
+                <div className="flex flex-wrap gap-3">
+                  {trailer && (
+                    <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
+                      ▶ Watch Trailer
+                    </a>
+                  )}
+                  {imdbPlayUrl && (
+                    <a
+                      href={imdbPlayUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors"
+                    >
+                      ▶ Assistir filme
+                    </a>
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2 pt-2">
                   <select
                     value={status}
