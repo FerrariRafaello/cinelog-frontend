@@ -71,6 +71,8 @@ export default function RegisterPage() {
         e.preventDefault();
         setLoading(true);
         setError("");
+        const age = parseInt(form.age, 10);
+
         const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.email)) {
           setError("Please enter a valid email address.");
@@ -79,7 +81,7 @@ export default function RegisterPage() {
         }
 
         if (getPasswordStrength(form.password).label === "Weak") {
-          setError("Password is too week. Use at least 8 characters including letters");
+          setError("Password is too weak. Use at least 8 characters including letters.");
           setLoading(false);
           return;
         }
@@ -90,7 +92,8 @@ export default function RegisterPage() {
           return;
         }
 
-        if (parseInt(form.age) < 16) {
+        if (Number.isNaN(age) || age < 18) {
+          setError("You must be at least 18 years old to register.");
           setLoading(false);
           return;
         }
@@ -98,14 +101,23 @@ export default function RegisterPage() {
         try {
             await register({
                 name:form.name,
-                age:parseInt(form.age),
+                age,
                 email:form.email,
-                cpf:form.cpf.replace(/\D/g, ""),
                 password:form.password,
+                ...(form.cpf ? { cpf: form.cpf.replace(/\D/g, "") } : {}),
             });
             router.push("/login");
-        } catch{
-            setError("Error creating account. Check your details.");
+        } catch(error:any){
+            const status = error?.response?.status;
+            const apiMessage = error?.response?.data?.error?.message;
+
+            if (status === 409) {
+              setError("Email or CPF already registered.");
+            } else if (status === 422) {
+              setError(apiMessage || "Invalid registration data. Please review your information.");
+            } else {
+              setError("Error creating account. Please try again.");
+            }
         } finally{
             setLoading(false);
         }
@@ -151,8 +163,8 @@ export default function RegisterPage() {
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               required
             />
-            {form.age && parseInt(form.age) < 16 && (
-              <p className="text-xs mt-1 text-red-500">You must be at least 16 years old to register.</p>
+            {form.age && parseInt(form.age, 10) < 18 && (
+              <p className="text-xs mt-1 text-red-500">You must be at least 18 years old to register.</p>
             )}
           </div>
 

@@ -21,7 +21,7 @@ export async function register(data: {
     name:string;
     age:number;
     email:string;
-    cpf:string;
+    cpf?:string;
     password:string;
 }): Promise<void> {
     await api.post("/v1/users", data);
