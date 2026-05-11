@@ -27,9 +27,14 @@ api.interceptors.request.use((config)=> {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const requestUrl = String(error.config?.url || "");
+        const isAuthFlow = requestUrl.includes("/v1/auth/login") || requestUrl.includes("/v1/users");
+
+        if (error.response?.status === 401 && typeof window !== "undefined") {
             Cookies.remove("token");
-            window.location.href="/login";
+            if (!isAuthFlow && window.location.pathname !== "/login") {
+                window.location.href="/login";
+            }
         }
         return Promise.reject(error);
     }
