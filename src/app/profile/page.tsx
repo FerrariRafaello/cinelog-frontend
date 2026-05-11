@@ -8,6 +8,9 @@ import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog"
+import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
+import { CoverPickerDialog } from "@/components/CoverPickerDialog";
+import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
 
 
@@ -22,6 +25,11 @@ export default function MoviePage() {
     const [editRating, setEditRating]=useState("");
     const [editComment, setEditComment]=useState("");
     const [movieInfo, setMovieInfo]=useState<Record<number, {title: string, poster: string}>>({});
+    const [avatarId, setAvatarId]=useState<string | null>(null);
+    const [coverId, setCoverId]=useState<string | null>(null);
+    const [bio, setBio]=useState("");
+    const [editingBio, setEditingBio]=useState(false);
+    const [bioInput, setBioInput]=useState("");
 
 
     useEffect(() => {
@@ -39,6 +47,9 @@ export default function MoviePage() {
         try {
           const resp = await api.get(`/v1/users/${user_id}`);
           setUserName(resp.data.name);
+          setAvatarId(resp.data.avatar_id);
+          setCoverId(resp.data.cover_id);
+          setBio(resp.data.bio || "");
         } catch {
           setUserName("");
         } finally {
@@ -51,6 +62,19 @@ export default function MoviePage() {
     }, 50);
     return () => clearTimeout(timer);
   }, []);
+
+
+    async function handleUpdateProfile(data: {avatar_id?: string, cover_id?: string, bio?: string}) {
+        try {
+            await api.patch(`/v1/users/${userId}`, data);
+            if (data.avatar_id) setAvatarId(data.avatar_id);
+            if (data.cover_id) setCoverId(data.cover_id);
+            if (data.bio !== undefined) setBio(data.bio);
+            toast.success("Profile updated!");
+        } catch {
+            toast.error("Error updating profile.");
+        }
+    }
 
 
     async function fetchMovieInfo(ids: number[]) {
@@ -158,11 +182,18 @@ export default function MoviePage() {
 
       {/* Cover + Avatar */}
       <div className="relative">
-        <div className="h-48 bg-gradient-to-r from-slate-700 to-slate-900 w-full" />
+        <CoverPickerDialog
+          currentId={coverId}
+          currentGradient={getCoverGradient(coverId)}
+          onSelect={(id: string) => handleUpdateProfile({ cover_id: id })}
+        />
         <div className="absolute left-8 -bottom-14">
-          <div className="w-28 h-28 rounded-full border-4 border-background bg-muted flex items-center justify-center text-4xl font-bold text-muted-foreground">
-            {userName.charAt(0).toUpperCase()}
-          </div>
+          <AvatarPickerDialog
+            currentId={avatarId}
+            userName={userName}
+            currentBg={getAvatarBg(avatarId)}
+            onSelect={(id: string) => handleUpdateProfile({ avatar_id: id })}
+          />
         </div>
       </div>
 
@@ -170,6 +201,36 @@ export default function MoviePage() {
         <div>
           <h2 className="text-2xl font-bold">{userName || `User #${userId}`}</h2>
           <p className="text-muted-foreground text-sm mt-1">{reviews.length} reviews · {watchlist.length} in watchlist</p>
+
+          {/* Bio */}
+          {editingBio ? (
+            <div className="mt-3 flex gap-2 items-start max-w-md">
+              <textarea
+                value={bioInput}
+                onChange={(e) => setBioInput(e.target.value)}
+                maxLength={200}
+                className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm min-h-16"
+                placeholder="Tell us about yourself..."
+              />
+              <div className="flex flex-col gap-1">
+                <Button size="sm" onClick={() => {
+                  handleUpdateProfile({ bio: bioInput });
+                  setEditingBio(false);
+                }}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => {
+                  setEditingBio(false);
+                  setBioInput(bio);
+                }}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <p
+              className="text-sm text-muted-foreground mt-2 cursor-pointer hover:text-foreground transition-colors max-w-md"
+              onClick={() => { setEditingBio(true); setBioInput(bio); }}
+            >
+              {bio || "Click to add a bio..."}
+            </p>
+          )}
         </div>
 
         {/* Reviews em grade */}
