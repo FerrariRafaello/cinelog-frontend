@@ -21,6 +21,7 @@ function HomeContent() {
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [trending, setTrending] = useState<Movie[]>([]);
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
   const [topRated, setTopRated]=useState<Movie[]>([])
@@ -69,46 +70,44 @@ function HomeContent() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const token = Cookies.get("token");
-      if (!token) {
-        router.push("/login");
-      } else {
-        setChecked(true);
+    const token = Cookies.get("token");
+    if (!token) {
+      setRedirecting(true);
+      router.push("/login");
+      return;
+    }
+    setChecked(true);
 
-        async function fetchTrending() {
-          try {
-            const resp = await api.get("/v1/tmdb/trending");
-            setTrending(resp.data.results);
-          } catch {
-            setTrending([]);
-          }
-        }
-
-        async function fetchNowPlaying() {
-          try {
-            const resp = await api.get("/v1/tmdb/now-playing");
-            setNowPlaying(resp.data.results);
-          } catch {
-            setNowPlaying([]);
-          }
-        }
-
-        async function fetchTopRated() {
-          try {
-            const resp=await api.get("/v1/tmdb/top-rated");
-            setTopRated(resp.data.results)
-          }catch {
-            setTopRated([]);
-          }
-        }
-
-        fetchTrending();
-        fetchNowPlaying();
-        fetchTopRated();
+    async function fetchTrending() {
+      try {
+        const resp = await api.get("/v1/tmdb/trending");
+        setTrending(resp.data.results);
+      } catch {
+        setTrending([]);
       }
-    }, 50);
-    return () => clearTimeout(timer);
+    }
+
+    async function fetchNowPlaying() {
+      try {
+        const resp = await api.get("/v1/tmdb/now-playing");
+        setNowPlaying(resp.data.results);
+      } catch {
+        setNowPlaying([]);
+      }
+    }
+
+    async function fetchTopRated() {
+      try {
+        const resp=await api.get("/v1/tmdb/top-rated");
+        setTopRated(resp.data.results)
+      }catch {
+        setTopRated([]);
+      }
+    }
+
+    fetchTrending();
+    fetchNowPlaying();
+    fetchTopRated();
   }, [router]);
 
   useEffect(() => {
@@ -259,7 +258,7 @@ function HomeContent() {
     fetchFeaturedTrailer();
   }, [featuredMovie?.id]);
 
-  if (!checked) return (
+  if (!checked || redirecting) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="animate-pulse text-muted-foreground">Loading...</div>
     </div>
