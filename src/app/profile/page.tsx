@@ -8,7 +8,8 @@ import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog"
-import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { AvatarPickerDialog } from "@/components/AvatarPickerDialog";
+import { CoverPickerDialog } from "@/components/CoverPickerDialog";
 import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
 
@@ -27,8 +28,8 @@ export default function MoviePage() {
     const [avatarId, setAvatarId]=useState<string | null>(null);
     const [coverId, setCoverId]=useState<string | null>(null);
     const [bio, setBio]=useState("");
-    const [pronouns, setPronouns]=useState("");
-    const [favoriteGenres, setFavoriteGenres]=useState("");
+    const [editingBio, setEditingBio]=useState(false);
+    const [bioInput, setBioInput]=useState("");
 
 
     useEffect(() => {
@@ -49,8 +50,6 @@ export default function MoviePage() {
           setAvatarId(resp.data.avatar_id);
           setCoverId(resp.data.cover_id);
           setBio(resp.data.bio || "");
-          setPronouns(resp.data.pronouns || "");
-          setFavoriteGenres(resp.data.favorite_genres || "");
         } catch {
           setUserName("");
         } finally {
@@ -65,20 +64,16 @@ export default function MoviePage() {
   }, []);
 
 
-    function handleProfileDialogSave(data: {
-      name?: string;
-      bio?: string;
-      pronouns?: string;
-      favorite_genres?: string;
-      avatar_id?: string;
-      cover_id?: string;
-    }) {
-      if (data.name !== undefined) setUserName(data.name);
-      if (data.bio !== undefined) setBio(data.bio);
-      if (data.pronouns !== undefined) setPronouns(data.pronouns);
-      if (data.favorite_genres !== undefined) setFavoriteGenres(data.favorite_genres);
-      if (data.avatar_id !== undefined) setAvatarId(data.avatar_id);
-      if (data.cover_id !== undefined) setCoverId(data.cover_id);
+    async function handleUpdateProfile(data: {avatar_id?: string, cover_id?: string, bio?: string}) {
+        try {
+            await api.patch(`/v1/users/${userId}`, data);
+            if (data.avatar_id) setAvatarId(data.avatar_id);
+            if (data.cover_id) setCoverId(data.cover_id);
+            if (data.bio !== undefined) setBio(data.bio);
+            toast.success("Profile updated!");
+        } catch {
+            toast.error("Error updating profile.");
+        }
     }
 
 
@@ -187,26 +182,18 @@ export default function MoviePage() {
 
       {/* Cover + Avatar */}
       <div className="relative">
-        <div className={`h-40 sm:h-52 w-full ${getCoverGradient(coverId)}`} />
-        <div className="absolute left-4 sm:left-8 -bottom-14 flex items-end gap-3">
-          <div className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-background flex items-center justify-center text-3xl font-semibold text-white shadow-md ${getAvatarBg(avatarId)}`}>
-            {(userName || "U").charAt(0).toUpperCase()}
-          </div>
-          {userId && (
-            <EditProfileDialog
-              userId={userId}
-              currentName={userName}
-              currentBio={bio}
-              currentPronouns={pronouns}
-              currentGenres={favoriteGenres}
-              currentAvatarId={avatarId}
-              currentCoverId={coverId}
-              triggerLabel="✏️"
-              triggerAriaLabel="Editar perfil"
-              triggerClassName="h-9 w-9 rounded-full border border-border bg-background/90 text-sm hover:bg-background transition-colors"
-              onSave={handleProfileDialogSave}
-            />
-          )}
+        <CoverPickerDialog
+          currentId={coverId}
+          currentGradient={getCoverGradient(coverId)}
+          onSelect={(id: string) => handleUpdateProfile({ cover_id: id })}
+        />
+        <div className="absolute left-4 sm:left-8 -bottom-14">
+          <AvatarPickerDialog
+            currentId={avatarId}
+            userName={userName}
+            currentBg={getAvatarBg(avatarId)}
+            onSelect={(id: string) => handleUpdateProfile({ avatar_id: id })}
+          />
         </div>
       </div>
 
@@ -214,10 +201,35 @@ export default function MoviePage() {
         <div>
           <h2 className="text-2xl font-bold">{userName || `User #${userId}`}</h2>
           <p className="text-muted-foreground text-sm mt-1">{reviews.length} reviews · {watchlist.length} in watchlist</p>
-          {pronouns && <p className="text-sm text-muted-foreground mt-2">{pronouns}</p>}
-          <p className="text-sm text-muted-foreground mt-2 max-w-md">{bio || "No bio yet."}</p>
-          {favoriteGenres && (
-            <p className="text-xs text-muted-foreground mt-2">Favorite genres: {favoriteGenres}</p>
+
+          {/* Bio */}
+          {editingBio ? (
+            <div className="mt-3 flex gap-2 items-start max-w-md">
+              <textarea
+                value={bioInput}
+                onChange={(e) => setBioInput(e.target.value)}
+                maxLength={200}
+                className="flex-1 px-3 py-2 rounded-md border border-input bg-background text-sm min-h-16"
+                placeholder="Tell us about yourself..."
+              />
+              <div className="flex flex-col gap-1">
+                <Button size="sm" onClick={() => {
+                  handleUpdateProfile({ bio: bioInput });
+                  setEditingBio(false);
+                }}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => {
+                  setEditingBio(false);
+                  setBioInput(bio);
+                }}>Cancel</Button>
+              </div>
+            </div>
+          ) : (
+            <p
+              className="text-sm text-muted-foreground mt-2 cursor-pointer hover:text-foreground transition-colors max-w-md"
+              onClick={() => { setEditingBio(true); setBioInput(bio); }}
+            >
+              {bio || "Click to add a bio..."}
+            </p>
           )}
         </div>
 
