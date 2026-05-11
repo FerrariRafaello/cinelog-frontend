@@ -403,9 +403,14 @@ export default function MoviePage() {
           {reviews.map((review) => (
             <div key={review.id} className="p-4 rounded-xl border border-border space-y-2 bg-background/70">
               <div className="flex justify-between items-center gap-2">
-                <span className="text-sm sm:text-base font-medium">
+                <button
+                  type="button"
+                  onClick={() => router.push(`/profile?user=${review.user_id}`)}
+                  className="text-sm sm:text-base font-medium hover:underline"
+                  title="View profile"
+                >
                   {review.user_id === currentUserId ? "You" : `User #${review.user_id}`}
-                </span>
+                </button>
                 <StarRating value={review.rating} onChange={() => {}} readonly />
               </div>
               {review.comment && <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{review.comment}</p>}

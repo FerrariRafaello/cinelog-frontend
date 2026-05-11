@@ -3,7 +3,7 @@
 //IMPORTS
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,11 @@ import { toast } from "sonner";
 
 export default function MoviePage() {
     const router=useRouter();
+  const searchParams = useSearchParams();
     const [reviews, setReviews]=useState<Review[]>([]);
     const [watchlist, setWatchlist]=useState<WatchlistItem[]>([]);
-    const [userId, setUserId]=useState<number | null>(null);
+  const [viewerUserId, setViewerUserId]=useState<number | null>(null);
+  const [profileUserId, setProfileUserId]=useState<number | null>(null);
     const [checked, setChecked]=useState(false);
     const [userName, setUserName]=useState("");
     const [editingReviewId, setEditingReviewId]=useState<number | null>(null);
@@ -40,7 +42,11 @@ export default function MoviePage() {
       }
       const payload = JSON.parse(atob(token.split(".")[1]));
       const id = parseInt(payload.sub);
-      setUserId(id);
+      setViewerUserId(id);
+
+      const queryUserId = Number(searchParams.get("user"));
+      const targetUserId = Number.isFinite(queryUserId) && queryUserId > 0 ? queryUserId : id;
+      setProfileUserId(targetUserId);
 
       async function fetchUser(user_id: number) {
         try {
@@ -57,12 +63,18 @@ export default function MoviePage() {
           setChecked(true);
         }
       }
-      fetchUser(id);
-      fetchReviews(id);
-      fetchWatchlist();
+      fetchUser(targetUserId);
+      fetchReviews(targetUserId);
+      if (targetUserId === id) {
+        fetchWatchlist();
+      } else {
+        setWatchlist([]);
+      }
     }, 50);
     return () => clearTimeout(timer);
-  }, []);
+  }, [router, searchParams]);
+
+    const isOwnProfile = viewerUserId !== null && profileUserId === viewerUserId;
 
 
     function handleEditSave(data: {name?: string; bio?: string; pronouns?: string; favorite_genres?: string; avatar_id?: string; cover_id?: string;}) {
@@ -130,7 +142,9 @@ export default function MoviePage() {
           comment: editComment || undefined,
         });
         setEditingReviewId(null);
-        fetchReviews(userId!);
+        if (profileUserId) {
+          fetchReviews(profileUserId);
+        }
         toast.success("Review updated!");
       }catch {
         toast.error("Error updating review")
@@ -198,12 +212,12 @@ export default function MoviePage() {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="text-4xl font-bold">{userName || `User #${userId}`}</h2>
+              <h2 className="text-4xl font-bold">{userName || `User #${profileUserId}`}</h2>
               {pronouns && <p className="text-muted-foreground text-base mt-1">{pronouns}</p>}
             </div>
-            {userId !== null && (
+            {isOwnProfile && viewerUserId !== null && (
               <EditProfileDialog
-                userId={userId}
+                userId={viewerUserId}
                 currentName={userName}
                 currentBio={bio}
                 currentPronouns={pronouns}
@@ -244,13 +258,13 @@ export default function MoviePage() {
         {/* Reviews */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-bold">My Reviews</h3>
+            <h3 className="text-2xl font-bold">{isOwnProfile ? "My Reviews" : "Reviews"}</h3>
           </div>
           {reviews.length === 0 && <p className="text-muted-foreground text-base">No reviews yet.</p>}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {reviews.slice(0, 10).map((review) => (
               <div key={review.id} className="rounded-xl overflow-hidden border border-border/50 group relative bg-card">
-                {editingReviewId === review.id ? (
+                {isOwnProfile && editingReviewId === review.id ? (
                   <div className="p-3 space-y-2">
                     <input
                       type="number" min="0" max="10" step="0.1"
@@ -292,14 +306,16 @@ export default function MoviePage() {
                     {review.comment && (
                       <p className="text-sm text-muted-foreground px-3 py-2 line-clamp-2">{review.comment}</p>
                     )}
-                    <div className="flex gap-2 px-3 pb-3">
-                      <Button size="sm" variant="outline" className="text-sm h-8 flex-1" onClick={() => {
-                        setEditingReviewId(review.id);
-                        setEditRating(String(review.rating));
-                        setEditComment(review.comment || "");
-                      }}>Edit</Button>
-                      <Button size="sm" variant="destructive" className="text-sm h-8 flex-1" onClick={() => handleDeleteReview(review.id)}>Delete</Button>
-                    </div>
+                    {isOwnProfile && (
+                      <div className="flex gap-2 px-3 pb-3">
+                        <Button size="sm" variant="outline" className="text-sm h-8 flex-1" onClick={() => {
+                          setEditingReviewId(review.id);
+                          setEditRating(String(review.rating));
+                          setEditComment(review.comment || "");
+                        }}>Edit</Button>
+                        <Button size="sm" variant="destructive" className="text-sm h-8 flex-1" onClick={() => handleDeleteReview(review.id)}>Delete</Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -308,6 +324,7 @@ export default function MoviePage() {
         </div>
 
         {/* Watchlist */}
+        {isOwnProfile && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-bold">My Watchlist</h3>
@@ -353,6 +370,7 @@ export default function MoviePage() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
