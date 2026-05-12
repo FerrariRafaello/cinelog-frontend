@@ -118,6 +118,12 @@ function HomeContent() {
       .filter((m) => m.id);
   }
 
+  function truncateText(text: string, maxLength: number): string {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength).trimEnd()}...`;
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -529,7 +535,7 @@ function HomeContent() {
             {featuredMovie && (
               <section className="px-4 sm:px-8 lg:px-12">
                 <div className="relative h-[clamp(36rem,84svh,52rem)] sm:h-[clamp(34rem,74svh,48rem)] lg:h-[clamp(30rem,62vh,40rem)] overflow-hidden rounded-2xl">
-                  <div className="h-full overflow-y-auto overscroll-contain [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="h-full overflow-hidden">
                     <div className="relative min-h-full overflow-hidden rounded-2xl border border-border/60">
                       <div
                         className="absolute inset-0"
@@ -564,7 +570,7 @@ function HomeContent() {
                         </>
                       )}
 
-                      <div className="relative z-10 min-h-full w-full px-6 py-6 sm:px-10 sm:py-8 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
+                      <div className="relative z-10 min-h-full w-full px-6 py-6 sm:px-10 sm:py-8 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-center justify-center sm:translate-y-4 lg:translate-y-13 gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
                         <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20">
                           <img
                             src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
@@ -576,7 +582,7 @@ function HomeContent() {
                         <div className="w-full max-w-4xl flex flex-col items-center lg:items-start">
                           <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
                           <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
-                          <p className="mt-3 text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{featuredMovie.overview}</p>
+                          <p className="mt-3 text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 150)}</p>
 
                           <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
                             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
