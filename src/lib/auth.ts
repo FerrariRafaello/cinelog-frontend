@@ -53,7 +53,7 @@ export async function login(email:string, password:string):Promise<void> {
 
 export async function register(data: {
     name:string;
-    age:number;
+    age?:number;
     email:string;
     cpf?:string;
     password:string;

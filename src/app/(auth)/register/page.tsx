@@ -10,7 +10,7 @@ export default function RegisterPage() {
     const router = useRouter();
     const [form, setForm] = useState({
         name: "",
-      age: "",
+        age: "",
         email: "",
         cpf: "",
         password: "",
@@ -85,12 +85,7 @@ export default function RegisterPage() {
           return;
         }
 
-        const parsedAge = Number.parseInt(form.age, 10);
-        if (!Number.isInteger(parsedAge) || parsedAge <= 0) {
-          setError("Please enter a valid age.");
-          setLoading(false);
-          return;
-        }
+        const parsedAge = form.age ? Number.parseInt(form.age, 10) : undefined;
 
         if (getPasswordStrength(form.password).label === "Weak") {
           setError("Password is too weak. Use at least 8 characters including letters.");
@@ -107,10 +102,10 @@ export default function RegisterPage() {
         try {
             await register({
                 name: form.name,
-              age: parsedAge,
+                ...(parsedAge !== undefined ? { age: parsedAge } : {}),
                 email: form.email,
                 password: form.password,
-                ...(form.cpf ? { cpf: form.cpf.replace(/\D/g, "") } : {}),
+                ...(form.cpf.replace(/\D/g, "").length === 11 ? { cpf: form.cpf.replace(/\D/g, "") } : {}),
             });
             router.push("/login");
         } catch (error: any) {
@@ -159,7 +154,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Age</label>
+            <label className="text-sm font-medium">Age <span className="text-muted-foreground text-xs">(optional)</span></label>
             <input
               type="number"
               name="age"
@@ -167,7 +162,6 @@ export default function RegisterPage() {
               onChange={handleChange}
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Your age"
-              required
               min={1}
             />
           </div>
