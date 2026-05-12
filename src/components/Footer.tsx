@@ -1,7 +1,7 @@
 export function Footer() {
   return (
-    <footer className="border-t border-border px-6 py-6 mt-auto">
-      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-muted-foreground">
+    <footer className="border-t border-border px-6 py-8 sm:py-10 mt-auto">
+      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
         <p>© 2026 Cinelog. All rights reserved.</p>
         <p>
           This product uses the{" "}

@@ -22,8 +22,8 @@ export default function LoginPage() {
         try {
             await login(email, password);
             router.push("/");
-        } catch{
-            setError("E-mail or password incorrect.")
+        } catch (error: unknown) {
+          setError(error instanceof Error ? error.message : "E-mail or password incorrect.")
         } finally {
             setLoading(false);
         }
