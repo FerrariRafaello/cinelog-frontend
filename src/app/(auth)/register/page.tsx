@@ -1,6 +1,5 @@
 "use client";
 
-//IMPORTS
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/auth";
@@ -8,45 +7,45 @@ import { Button } from "@/components/ui/button"
 
 
 export default function RegisterPage() {
-    const router=useRouter();
-    const [form, setForm]=useState({
-        name:"",
-        age:"",
-        email:"",
-        cpf:"",
-        password:"",
+    const router = useRouter();
+    const [form, setForm] = useState({
+        name: "",
+      age: "",
+        email: "",
+        cpf: "",
+        password: "",
     });
-    const [error, setError]=useState("");
-    const [loading, setLoading]=useState(false);
-    const [showPassword, setShowPassword]=useState(false);
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     function getPasswordStrength(pwd: string): { label: string; color: string } {
       if (pwd.length === 0) return { label: "", color: "" };
       if (pwd.length < 8 || !/[a-zA-Z]/.test(pwd))
-        return { label: "Weak", color: "text-green-500" };
+        return { label: "Weak", color: "text-red-500" };
       if (
         pwd.length >= 10 &&
         /[0-9]/.test(pwd) &&
         /[A-Z]/.test(pwd) &&
         /[^a-zA-Z0-9]/.test(pwd)
       )
-        return { label: "Strong", color: "text-red-500" };
+        return { label: "Strong", color: "text-green-500" };
       if (pwd.length >= 8 && /[0-9]/.test(pwd))
         return { label: "Medium", color: "text-yellow-500" };
-      return { label: "Weak", color: "text-green-500"}
+      return { label: "Weak", color: "text-red-500" };
     }
 
-    function formatCPF(value:string):string {
+    function formatCPF(value: string): string {
       return value
         .replace(/\D/g, "")
-        .slice(0,11)
+        .slice(0, 11)
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
     }
 
-    function validateCPF(cpf:string):boolean{
-      cpf=cpf.replace(/\D/g, "");
+    function validateCPF(cpf: string): boolean {
+      cpf = cpf.replace(/\D/g, "");
       if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
       let sum = 0;
       for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]) * (10 - i);
@@ -62,20 +61,33 @@ export default function RegisterPage() {
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
       if (e.target.name === "cpf") {
-        setForm({...form, cpf:formatCPF(e.target.value) })
+        setForm({ ...form, cpf: formatCPF(e.target.value) });
       } else {
         setForm({ ...form, [e.target.name]: e.target.value });
       }
     }
+
     async function handleSubmit(e: React.SyntheticEvent) {
         e.preventDefault();
         setLoading(true);
         setError("");
-        const age = parseInt(form.age, 10);
 
-        const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.email)) {
           setError("Please enter a valid email address.");
+          setLoading(false);
+          return;
+        }
+
+        if (form.name.trim().length < 2) {
+          setError("Name must be at least 2 characters.");
+          setLoading(false);
+          return;
+        }
+
+        const parsedAge = Number.parseInt(form.age, 10);
+        if (!Number.isInteger(parsedAge) || parsedAge <= 0) {
+          setError("Please enter a valid age.");
           setLoading(false);
           return;
         }
@@ -92,22 +104,16 @@ export default function RegisterPage() {
           return;
         }
 
-        if (Number.isNaN(age) || age < 18) {
-          setError("You must be at least 18 years old to register.");
-          setLoading(false);
-          return;
-        }
-
         try {
             await register({
-                name:form.name,
-                age,
-                email:form.email,
-                password:form.password,
+                name: form.name,
+              age: parsedAge,
+                email: form.email,
+                password: form.password,
                 ...(form.cpf ? { cpf: form.cpf.replace(/\D/g, "") } : {}),
             });
             router.push("/login");
-        } catch(error:any){
+        } catch (error: any) {
             const status = error?.response?.status;
             const apiMessage = error?.response?.data?.error?.message;
 
@@ -118,12 +124,12 @@ export default function RegisterPage() {
             } else {
               setError("Error creating account. Please try again.");
             }
-        } finally{
+        } finally {
             setLoading(false);
         }
     }
 
-     return (
+    return (
     <div className="relative min-h-screen bg-background overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,oklch(0.75_0.15_55_/_0.18),transparent_45%),radial-gradient(circle_at_15%_65%,oklch(0.65_0.12_200_/_0.18),transparent_45%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,oklch(0.08_0.005_285_/_0.92)_70%)]" />
@@ -132,7 +138,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-md shadow-2xl">
         <div className="text-center space-y-1">
           <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Join the club</p>
-          <h1 className="text-4xl font-bold tracking-tight">Cinelog</h1>
+          <h1 className="text-4xl font-bold tracking-tight">CritCine</h1>
           <p className="text-muted-foreground mt-1 text-base">Create your account</p>
         </div>
 
@@ -147,25 +153,23 @@ export default function RegisterPage() {
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Your name"
               required
+              minLength={2}
+              maxLength={50}
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium">Date of Birth</label>
+            <label className="text-sm font-medium">Age</label>
             <input
-              type="date"
-              name="birth_date"
-              onChange={(e) => {
-                const birth = new Date(e.target.value);
-                const age = Math.floor((Date.now() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-                setForm({ ...form, age: String(age) });
-              }}
+              type="number"
+              name="age"
+              value={form.age}
+              onChange={handleChange}
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="Your age"
               required
+              min={1}
             />
-            {form.age && parseInt(form.age, 10) < 18 && (
-              <p className="text-xs mt-1 text-red-500">You must be at least 18 years old to register.</p>
-            )}
           </div>
 
           <div>

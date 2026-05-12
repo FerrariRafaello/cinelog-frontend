@@ -434,8 +434,12 @@ export default function MoviePage() {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Write your review... (optional)"
+              maxLength={500}
               className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base min-h-24"
             />
+            <p className={`text-xs text-right mt-1 ${comment.length >= 480 ? "text-destructive" : "text-muted-foreground"}`}>
+              {comment.length}/500
+            </p>
             <Button type="submit" className="h-11 text-sm sm:text-base">Submit Review</Button>
           </form>
         </section>
