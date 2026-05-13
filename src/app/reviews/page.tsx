@@ -2,11 +2,12 @@
 
 import Cookies from "js-cookie";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StarRating } from "@/components/StarRating";
+import { NavBar } from "@/components/NavBar";
 
 interface ReviewFull {
   id: number;
@@ -28,6 +29,7 @@ interface MovieInfo {
 
 function ReviewsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [reviews, setReviews] = useState<ReviewFull[]>([]);
   const [movieInfos, setMovieInfos] = useState<Record<number, MovieInfo>>({});
   const [loading, setLoading] = useState(true);
@@ -42,8 +44,15 @@ function ReviewsContent() {
       router.push("/login");
       return;
     }
+    const userFromUrl = searchParams.get("user");
+    if (userFromUrl) {
+      // busca o nome do usuário para mostrar no input
+      api.get(`/v1/users/${userFromUrl}`)
+        .then((resp) => setSearchUser(resp.data.name || userFromUrl))
+        .catch(() => setSearchUser(userFromUrl));
+    }
     setChecked(true);
-  }, []);
+  }, [router, searchParams]);
 
   useEffect(() => {
     if (!checked) return;
@@ -111,39 +120,11 @@ function ReviewsContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 flex justify-between items-center">
-        <button
-          onClick={() => router.back()}
-          className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-2 py-2 pr-4 text-sm font-semibold text-foreground hover:border-primary/60 hover:bg-card transition-colors"
-        >
-          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-primary/20 text-primary group-hover:bg-primary/30 transition-colors">←</span>
-          Back
-        </button>
-        <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
-        <div className="flex gap-3">
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium" onClick={() => router.push("/")}>Home</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium" onClick={() => router.push("/profile")}>Profile</Button>
-        </div>
-      </nav>
+      <NavBar showBack />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-8 py-8 space-y-6">
-        <form onSubmit={handleSearch} className="space-y-3">
-          <div className="flex gap-3">
-            <Input
-              value={searchUser}
-              onChange={(e) => setSearchUser(e.target.value)}
-              placeholder="Search by username..."
-              className="flex-1"
-            />
-            <Input
-              value={searchMovie}
-              onChange={(e) => setSearchMovie(e.target.value)}
-              placeholder="Search by movie..."
-              className="flex-1"
-            />
-            <Button type="submit">Search</Button>
-          </div>
-          <div className="flex gap-2">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-center flex-wrap">
+          <div className="flex gap-2 flex-shrink-0">
             {["newest", "oldest", "popular"].map((s) => (
               <button
                 key={s}
@@ -155,6 +136,11 @@ function ReviewsContent() {
               </button>
             ))}
           </div>
+          <div className="flex gap-3 flex-1 min-w-0">
+            <Input value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Search by username..." className="flex-1" />
+            <Input value={searchMovie} onChange={(e) => setSearchMovie(e.target.value)} placeholder="Search by movie..." className="flex-1" />
+            <Button type="submit">Search</Button>
+          </div>
         </form>
 
         {loading && <p className="text-muted-foreground text-sm">Loading reviews...</p>}
@@ -163,11 +149,11 @@ function ReviewsContent() {
           <p className="text-muted-foreground text-sm">No reviews found.</p>
         )}
 
-        <div className="space-y-4">
-          {reviews.map((review) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {reviews.filter((r) => r.comment && r.comment.trim().length > 0).map((review) => {
             const movie = movieInfos[review.tmdb_movie_id];
             return (
-              <div key={review.id} className="flex gap-4 p-4 rounded-2xl border border-border/60 bg-card/70">
+              <div key={review.id} className="flex gap-3 p-4 rounded-2xl border border-border/60 bg-card/70 min-h-96 md:h-[30rem]">
                 <div
                   className="flex-shrink-0 w-16 sm:w-20 cursor-pointer"
                   onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}
@@ -182,37 +168,33 @@ function ReviewsContent() {
                     <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center text-xs text-muted-foreground">?</div>
                   )}
                 </div>
-                <div className="flex-1 space-y-2 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}
-                        className="text-sm font-semibold hover:underline line-clamp-1"
-                      >
-                        {movie?.title || `Movie #${review.tmdb_movie_id}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => router.push(`/profile?user=${review.user_id}`)}
-                        className="text-xs text-muted-foreground hover:underline block"
-                      >
-                        {review.user_name}
-                      </button>
+                <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <button type="button" onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)} className="text-sm font-semibold hover:underline line-clamp-1">
+                          {movie?.title || `Movie #${review.tmdb_movie_id}`}
+                        </button>
+                        <button type="button" onClick={() => router.push(`/profile?user=${review.user_id}`)} className="text-base font-semibold text-primary hover:underline block">
+                          {review.user_name}
+                        </button>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <StarRating value={review.rating} onChange={() => {}} readonly />
+                        <button
+                          type="button"
+                          onClick={() => handleLike(review.id)}
+                          disabled={review.liked_by_me}
+                          className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs font-medium hover:border-primary/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          👍 {review.likes}
+                        </button>
+                      </div>
                     </div>
-                    <StarRating value={review.rating} onChange={() => {}} readonly />
+                    <p className="text-sm text-white/80 leading-relaxed break-words overflow-hidden mt-2">
+                      {review.comment}
+                    </p>
                   </div>
-                  {review.comment && (
-                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">{review.comment}</p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleLike(review.id)}
-                    disabled={review.liked_by_me}
-                    className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs font-medium hover:border-primary/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    👍 {review.likes}
-                  </button>
                 </div>
               </div>
             );

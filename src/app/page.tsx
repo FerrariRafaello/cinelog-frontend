@@ -8,41 +8,103 @@ import { api } from "@/lib/api";
 import { Movie } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogoutDialog } from "@/components/LogoutDialog";
+import { NavBar } from "@/components/NavBar";
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
 // Componente memoizado das filas de filmes
-const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router }: { title: string; movieList: Movie[]; scrollRef: React.RefObject<HTMLDivElement | null>; router: ReturnType<typeof useRouter> }) {
+const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, nowPlayingIds }: { title: string; movieList: Movie[]; scrollRef: React.RefObject<HTMLDivElement | null>; router: ReturnType<typeof useRouter>; nowPlayingIds?: Set<number> }) {
   if (movieList.length === 0) return null;
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    function check() {
+      if (!el) return;
+      setCanScrollLeft(el.scrollLeft > 1);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+    }
+
+    const ro = new ResizeObserver(() => {
+      requestAnimationFrame(check);
+    });
+    ro.observe(el);
+
+    el.addEventListener("scroll", check);
+
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", check);
+    };
+  }, [movieList]);
+
+  function scroll(dir: "left" | "right") {
+    if (!scrollRef.current) return;
+    const step = Math.max(scrollRef.current.clientWidth * 0.85, 280);
+    scrollRef.current.scrollBy({ left: dir === "right" ? step : -step, behavior: "smooth" });
+  }
+
   return (
-    <div className="space-y-1 overflow-visible mx-4 sm:mx-8 lg:mx-12">
-      <h2 className="pl-2 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">{title}</h2>
-      <div ref={scrollRef} className="overflow-x-auto overflow-y-visible py-4 sm:py-5 snap-x snap-mandatory">
-        <div className="flex gap-4 sm:gap-5 w-max pl-2 pr-2">
-          {movieList.map((movie) => (
-            <div
-              key={movie.id}
-              className="group relative origin-bottom w-40 sm:w-48 lg:w-56 flex-shrink-0 snap-start cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:-translate-y-1 hover:scale-[1.02] hover:z-10 hover:ring-primary/50 transition-all duration-200"
-              onClick={() => router.push(`/movies/${movie.id}`)}
-            >
-              {movie.poster_path ? (
-                <img
-                  src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                  alt={movie.title}
-                  className="w-full aspect-[2/3] object-cover"
-                />
-              ) : (
-                <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">
-                  No image
+    <div className="space-y-1 overflow-visible mx-0 sm:mx-0 lg:mx-0 px-4 sm:px-8 lg:px-12">
+      <div className="flex items-center justify-between pr-2">
+        <h2 className="pl-2 pt-9 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">{title}</h2>
+      </div>
+      <div className="relative group/row">
+        <div
+          className={`absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity duration-200 group/arrow ${canScrollLeft ? 'group-hover/row:opacity-100' : ''} opacity-0`}
+          onClick={() => scroll("left")}
+        >
+          <span className="ml-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
+            ‹
+          </span>
+        </div>
+
+        <div
+          className={`absolute right-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent transition-opacity duration-200 group/arrow ${canScrollRight ? 'group-hover/row:opacity-100' : ''} opacity-0`}
+          onClick={() => scroll("right")}
+        >
+          <span className="mr-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
+            ›
+          </span>
+        </div>
+
+        <div ref={scrollRef} className="overflow-x-auto overflow-y-visible py-4 sm:py-5 snap-x snap-mandatory scrollbar-hide">
+          <div className="flex gap-4 sm:gap-5 w-max pr-6">
+            {movieList.map((movie) => (
+              <div
+                key={movie.id}
+                className="group relative w-40 sm:w-48 lg:w-56 flex-shrink-0 snap-start cursor-pointer rounded-xl overflow-hidden hover:-translate-y-1 hover:scale-[1.02] hover:z-10 transition-all duration-200 will-change-transform"
+                onClick={() => router.push(`/movies/${movie.id}`)}
+              >
+                {movie.poster_path ? (
+                  <>
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                      alt={movie.title}
+                      className="w-full aspect-[2/3] object-cover"
+                    />
+                    {nowPlayingIds?.has(movie.id) && (
+                      <div className="absolute top-0 left-0 z-10 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-1">
+                        Em Cartaz
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">
+                    No image
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 sm:p-4 pt-12">
+                  <p className="text-white text-sm sm:text-base font-bold line-clamp-2 leading-tight">{movie.title}</p>
+                  <p className="text-yellow-400 text-sm sm:text-base font-medium mt-1">⭐ {movie.vote_average.toFixed(1)}</p>
                 </div>
-              )}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 sm:p-4 pt-12">
-                <p className="text-white text-sm sm:text-base font-bold line-clamp-2 leading-tight">{movie.title}</p>
-                <p className="text-yellow-400 text-sm sm:text-base font-medium mt-1">⭐ {movie.vote_average.toFixed(1)}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -51,6 +113,7 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router }:
 
 function HomeContent() {
   const router = useRouter();
+  useInactivityLogout(() => router.push("/login"));
   const [query, setQuery] = useState("");
   const [genreQuery, setGenreQuery] = useState("Action");
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -68,6 +131,11 @@ function HomeContent() {
   const [featured, setFeatured] = useState<Movie[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredTrailer, setFeaturedTrailer] = useState<string | null>(null);
+  const [featuredCredits, setFeaturedCredits] = useState<any[]>([]);
+  const [featuredPaused, setFeaturedPaused] = useState(false);
+  const [genreSort, setGenreSort] = useState<"desc" | "asc">("desc");
+  const [showGenreResults, setShowGenreResults] = useState(false);
+  const nowPlayingIds = new Set(nowPlaying.map((m) => m.id));
   const searchParams = useSearchParams();
   const trendingRef = useRef<HTMLDivElement>(null);
   const nowPlayingRef = useRef<HTMLDivElement>(null);
@@ -75,6 +143,7 @@ function HomeContent() {
   const topRatedRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<HTMLDivElement>(null);
   const classicsRef = useRef<HTMLDivElement>(null);
+  const heroCastRef = useRef<HTMLDivElement>(null);
   const initRef = useRef(false);
   const featuredLengthRef = useRef(0);
 
@@ -270,6 +339,7 @@ function HomeContent() {
   function handleGoHome() {
     setQuery("");
     setMovies([]);
+    setShowGenreResults(false);
     router.replace("/");
   }
 
@@ -334,11 +404,11 @@ function HomeContent() {
       }
 
       const unique = Array.from(new Map(moviesByGenre.map((m) => [m.id, m])).values());
-      unique.sort((a: any, b: any) => {
-        const aDate = a.release_date ? new Date(a.release_date).getTime() : 0;
-        const bDate = b.release_date ? new Date(b.release_date).getTime() : 0;
-        return bDate - aDate;
-      });
+      unique.sort((a: any, b: any) =>
+        genreSort === "desc"
+          ? b.vote_average - a.vote_average
+          : a.vote_average - b.vote_average
+      );
 
       const normalizedMovies = normalizeMovieResults(unique).slice(0, 120);
       setMovies(normalizedMovies);
@@ -368,28 +438,35 @@ function HomeContent() {
   useEffect(() => {
     featuredLengthRef.current = featured.length;
     if (featured.length < 2) return;
+    if (featuredPaused) return;
     
     const timer = setInterval(() => {
       setFeaturedIndex((prev) => (prev + 1) % featuredLengthRef.current);
     }, 6000);
     return () => clearInterval(timer);
-  }, [featured]);
+  }, [featured, featuredPaused]);
 
   useEffect(() => {
-    async function fetchFeaturedTrailer() {
+    async function fetchFeaturedData() {
       if (!featuredMovie) {
         setFeaturedTrailer(null);
+        setFeaturedCredits([]);
         return;
       }
       try {
-        const resp = await api.get(`/v1/tmdb/movies/${featuredMovie.id}/videos`);
-        const yt = resp.data.results?.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
+        const [videoResp, creditsResp] = await Promise.all([
+          api.get(`/v1/tmdb/movies/${featuredMovie.id}/videos`),
+          api.get(`/v1/tmdb/movies/${featuredMovie.id}/credits`),
+        ]);
+        const yt = videoResp.data.results?.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
         setFeaturedTrailer(yt ? yt.key : null);
+        setFeaturedCredits(creditsResp.data.cast?.slice(0, 4) || []);
       } catch {
         setFeaturedTrailer(null);
+        setFeaturedCredits([]);
       }
     }
-    fetchFeaturedTrailer();
+    fetchFeaturedData();
   }, [featuredMovie?.id]);
 
   if (!checked || redirecting || initialLoading) return (
@@ -402,6 +479,7 @@ function HomeContent() {
     e.preventDefault();
     if (!query.trim()) return;
     setLoading(true);
+    setShowGenreResults(false);
     router.push(`/?q=${encodeURIComponent(query)}`);
     try {
       const resp = await api.get("/v1/tmdb/search", { params: { q: query } });
@@ -414,46 +492,15 @@ function HomeContent() {
   }
 
   async function handleGenreSearch() {
+    setShowGenreResults(true);
     await fetchMoviesByGenre(genreQuery, true);
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
-        <h1 className="flex flex-col items-start gap-1 text-xl sm:text-2xl font-bold tracking-tight sm:flex-row sm:items-baseline sm:gap-4 lg:gap-6">
-          CritCine
-          <span className="text-sm sm:text-base lg:text-[1.05rem] font-medium underline underline-offset-4 max-w-xl">
-            Plataforma criada para portfólio, sem fins lucrativos. Criado por: {}
-            <strong className="text-primary">Rafaello Ferrari</strong>
-          </span>
-        </h1>
-        <div className="flex w-full flex-wrap gap-2 sm:gap-3 lg:w-auto lg:flex-nowrap">
-          <Button
-            variant="ghost"
-            className="inline-flex items-center justify-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm sm:text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
-            onClick={handleGoHome}
-          >
-            Home
-          </Button>
-          <Button
-            variant="ghost"
-            className="inline-flex items-center justify-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm sm:text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
-            onClick={() => router.push("/profile")}
-          >
-            Profile
-          </Button>
-          <Button
-            variant="ghost"
-            className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
-            onClick={() => router.push("/reviews")}
-          >
-            Reviews
-          </Button>
-          <LogoutDialog />
-        </div>
-      </nav>
+      <NavBar showLogout />
 
-      <main className="py-8 sm:py-10 space-y-10 sm:space-y-12">
+      <main className="py-8 sm:py-10 space-y-14 sm:space-y-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
             <div className="order- lg:order- flex flex-col sm:flex-row gap-3 items-stretch lg:w-auto">
@@ -490,6 +537,26 @@ function HomeContent() {
                   Search by Genre
                 </Button>
               </div>
+              {showGenreResults && movies.length > 0 && (
+                <div className="h-12 sm:h-14 rounded-xl border border-border bg-card/70 p-1">
+                  <select
+                    value={genreSort}
+                    onChange={(e) => {
+                      setGenreSort(e.target.value as "desc" | "asc");
+                      const sorted = [...movies].sort((a, b) =>
+                        e.target.value === "desc"
+                          ? b.vote_average - a.vote_average
+                          : a.vote_average - b.vote_average
+                      );
+                      setMovies(sorted);
+                    }}
+                    className="h-full w-full rounded-lg border border-border/70 bg-background px-3 text-sm sm:text-base"
+                  >
+                    <option value="desc">Highest Rated</option>
+                    <option value="asc">Lowest Rated</option>
+                  </select>
+                </div>
+              )}
             </div>
             <form onSubmit={handleSearch} className="order-1 lg:order-2 flex flex-col sm:flex-row gap-3 items-stretch flex-1">
               <div className="flex-1 h-14 rounded-xl border border-border bg-card/70 p-1">
@@ -541,10 +608,11 @@ function HomeContent() {
         {movies.length === 0 && (
           <>
             {featuredMovie && (
-              <section className="px-4 sm:px-8 lg:px-12">
-                <div className="relative h-[clamp(36rem,84svh,52rem)] sm:h-[clamp(34rem,74svh,48rem)] lg:h-[clamp(30rem,62vh,40rem)] overflow-hidden rounded-2xl">
+              <section className="relative -mt-6 sm:-mt-10 lg:-mt-12">
+                <div className="pointer-events-none absolute top-0 left-0 right-0 h-16 z-10 bg-gradient-to-b from-background to-transparent" />
+                <div className="relative h-[clamp(36rem,84svh,52rem)] sm:h-[clamp(40rem,82svh,56rem)] lg:h-[clamp(36rem,82vh,55rem)] overflow-hidden rounded-2xl">
                   <div className="h-full overflow-hidden">
-                    <div className="relative min-h-full overflow-hidden rounded-2xl border border-border/60">
+                    <div className="relative min-h-full overflow-hidden rounded-2xl border border-border/60 group/featured" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
                       <div
                         className="absolute inset-0"
                         style={{
@@ -562,24 +630,24 @@ function HomeContent() {
                           <button
                             type="button"
                             onClick={goToPrevFeatured}
-                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full border border-white/25 bg-black/35 text-white hover:bg-black/55 transition-colors"
+                            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-start bg-gradient-to-r from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
                             aria-label="Previous featured movie"
                           >
-                            ←
+                            <span className="ml-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">‹</span>
                           </button>
                           <button
                             type="button"
                             onClick={goToNextFeatured}
-                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 sm:h-11 sm:w-11 place-items-center rounded-full border border-white/25 bg-black/35 text-white hover:bg-black/55 transition-colors"
+                            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-end bg-gradient-to-l from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
                             aria-label="Next featured movie"
                           >
-                            →
+                            <span className="mr-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">›</span>
                           </button>
                         </>
                       )}
 
-                      <div className="relative z-10 min-h-full w-full px-6 py-6 sm:px-10 sm:py-8 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-center justify-center sm:translate-y-4 lg:translate-y-13 gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
-                        <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20">
+                      <div className="relative z-10 min-h-full w-full px-6 py-6 sm:px-10 sm:py-8 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-stretch justify-center sm:translate-y-4 lg:translate-y-20 gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
+                        <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20 h-full">
                           <img
                             src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
                             alt={featuredMovie.title}
@@ -587,10 +655,10 @@ function HomeContent() {
                           />
                         </div>
 
-                        <div className="w-full max-w-4xl flex flex-col items-center lg:items-start">
+                        <div className="w-full max-w-4xl flex flex-col items-center lg:items-start justify-center">
                           <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
                           <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
-                          <p className="mt-3 text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 150)}</p>
+                          <p className="mt-3 text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
 
                           <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
                             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
@@ -613,6 +681,32 @@ function HomeContent() {
                               </Button>
                             </div>
 
+                            {featuredCredits.length > 0 && (
+                              <div className="mt-5 flex flex-wrap gap-6 justify-center lg:justify-start">
+                                {featuredCredits.slice(0, 4).map((actor) => (
+                                  <a
+                                    key={actor.id}
+                                    href={`https://www.google.com/search?q=${encodeURIComponent(`${actor.name} actor`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity"
+                                  >
+                                    {actor.profile_path ? (
+                                      <img
+                                        src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                                        alt={actor.name}
+                                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-2 ring-white/20"
+                                      />
+                                    ) : (
+                                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center text-white/60 text-xl font-bold">
+                                        {actor.name.charAt(0)}
+                                      </div>
+                                    )}
+                                    <span className="text-[11px] sm:text-xs text-white/70 text-center line-clamp-2 leading-tight w-20 sm:w-24">{actor.name}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -633,15 +727,18 @@ function HomeContent() {
                     </div>
                   </div>
                 </div>
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-25 bg-gradient-to-t from-background to-transparent rounded-b-2xl" />
               </section>
             )}
 
-            <MovieRow title="Trending This Week" movieList={trending} scrollRef={trendingRef} router={router} />
-            <MovieRow title="Now Playing" movieList={nowPlaying} scrollRef={nowPlayingRef} router={router} />
-            <MovieRow title={forYouTitle} movieList={forYou} scrollRef={forYouRef} router={router} />
-            <MovieRow title="Worth Watching Again" movieList={topRated} scrollRef={topRatedRef} router={router} />
-            <MovieRow title="Animation" movieList={animation} scrollRef={animationRef} router={router} />
-            <MovieRow title="Classics" movieList={classics} scrollRef={classicsRef} router={router} />
+            <div className="relative z-20 -mt-16 sm:-mt-20 lg:-mt-40">
+              <MovieRow title="Trending This Week" movieList={trending} scrollRef={trendingRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Now Playing" movieList={nowPlaying} scrollRef={nowPlayingRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title={forYouTitle} movieList={forYou} scrollRef={forYouRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Worth Watching Again" movieList={topRated} scrollRef={topRatedRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Animation" movieList={animation} scrollRef={animationRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Classics" movieList={classics} scrollRef={classicsRef} router={router} nowPlayingIds={nowPlayingIds} />
+            </div>
           </>
         )}
 

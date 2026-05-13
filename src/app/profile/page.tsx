@@ -2,13 +2,13 @@
 
 //IMPORTS
 import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { api } from "@/lib/api";
 import { Review, WatchlistItem } from "@/types";
 import { Button } from "@/components/ui/button";
-import { LogoutDialog } from "@/components/LogoutDialog"
+import { NavBar } from "@/components/NavBar";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import {
   Dialog,
@@ -20,10 +20,12 @@ import {
 } from "@/components/ui/dialog";
 import { getAvatarBg, getCoverGradient } from "@/lib/profile-options";
 import { toast } from "sonner";
+import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
 
 function ProfileContent() {
     const router=useRouter();
+  useInactivityLogout(() => router.push("/login"));
   const searchParams = useSearchParams();
     const [reviews, setReviews]=useState<Review[]>([]);
     const [watchlist, setWatchlist]=useState<WatchlistItem[]>([]);
@@ -42,6 +44,12 @@ function ProfileContent() {
     const [favoriteGenres, setFavoriteGenres]=useState("");
     const [deleteOpen, setDeleteOpen]=useState(false);
     const [deletingProfile, setDeletingProfile]=useState(false);
+    const reviewsScrollRef = useRef<HTMLDivElement>(null);
+    const watchlistScrollRef = useRef<HTMLDivElement>(null);
+    const [reviewsCanScrollLeft, setReviewsCanScrollLeft] = useState(false);
+    const [reviewsCanScrollRight, setReviewsCanScrollRight] = useState(false);
+    const [watchlistCanScrollLeft, setWatchlistCanScrollLeft] = useState(false);
+    const [watchlistCanScrollRight, setWatchlistCanScrollRight] = useState(false);
 
 
     useEffect(() => {
@@ -84,6 +92,34 @@ function ProfileContent() {
     }, 50);
     return () => clearTimeout(timer);
   }, [router, searchParams]);
+
+    useEffect(() => {
+      const el = reviewsScrollRef.current;
+      if (!el) return;
+      function check() {
+        if (!el) return;
+        setReviewsCanScrollLeft(el.scrollLeft > 1);
+        setReviewsCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+      }
+      const ro = new ResizeObserver(() => requestAnimationFrame(check));
+      ro.observe(el);
+      el.addEventListener("scroll", check);
+      return () => { ro.disconnect(); el.removeEventListener("scroll", check); };
+    }, [reviews, movieInfo]);
+
+    useEffect(() => {
+      const el = watchlistScrollRef.current;
+      if (!el) return;
+      function check() {
+        if (!el) return;
+        setWatchlistCanScrollLeft(el.scrollLeft > 1);
+        setWatchlistCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+      }
+      const ro = new ResizeObserver(() => requestAnimationFrame(check));
+      ro.observe(el);
+      el.addEventListener("scroll", check);
+      return () => { ro.disconnect(); el.removeEventListener("scroll", check); };
+    }, [watchlist, movieInfo]);
 
     const isOwnProfile = viewerUserId !== null && profileUserId === viewerUserId;
 
@@ -214,17 +250,7 @@ function ProfileContent() {
 
     return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border px-6 py-4 flex justify-between items-center">
-        <button
-          onClick={() => router.push("/")}
-          className="group inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/80 backdrop-blur-sm px-2 py-2 pr-4 text-sm sm:text-base font-semibold text-foreground shadow-md hover:border-primary/60 hover:bg-card transition-colors"
-        >
-          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-primary/20 text-primary group-hover:bg-primary/30 transition-colors">←</span>
-          Home
-        </button>
-        <h1 className="text-xl font-bold">Cinelog</h1>
-        <LogoutDialog />
-      </nav>
+      <NavBar showBack showLogout />
 
       {/* Cover + Avatar */}
       <div className="relative">
@@ -299,117 +325,147 @@ function ProfileContent() {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-2xl font-bold">{isOwnProfile ? "My Reviews" : "Reviews"}</h3>
+            <span className="text-sm text-muted-foreground">{reviews.length} reviews</span>
           </div>
           {reviews.length === 0 && <p className="text-muted-foreground text-base">No reviews yet.</p>}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {reviews.slice(0, 10).map((review) => (
-              <div key={review.id} className="rounded-xl overflow-hidden border border-border/50 group relative bg-card">
-                {isOwnProfile && editingReviewId === review.id ? (
-                  <div className="p-3 space-y-2">
-                    <input
-                      type="number" min="0" max="10" step="0.1"
-                      value={editRating}
-                      onChange={(e) => setEditRating(e.target.value)}
-                      className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm"
-                      placeholder="Rating (0-10)"
-                    />
-                    <textarea
-                      value={editComment}
-                      onChange={(e) => setEditComment(e.target.value)}
-                      className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm min-h-16"
-                      placeholder="Comment (optional)"
-                    />
-                    <div className="flex gap-1">
-                      <Button size="sm" className="h-8 flex-1" onClick={() => handleUpdateReview(review.id)}>Save</Button>
-                      <Button size="sm" variant="ghost" className="h-8 flex-1" onClick={() => setEditingReviewId(null)}>Cancel</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="relative cursor-pointer" onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}>
-                      {movieInfo[review.tmdb_movie_id]?.poster ? (
-                        <img
-                          src={`https://image.tmdb.org/t/p/w342${movieInfo[review.tmdb_movie_id].poster}`}
-                          alt={movieInfo[review.tmdb_movie_id]?.title}
-                          className="w-full aspect-[2/3] object-cover"
+          <div className="relative group/reviews">
+            <div
+              className={`absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity ${reviewsCanScrollLeft ? 'group-hover/reviews:opacity-100' : ''} opacity-0`}
+              onClick={() => reviewsScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+            >
+              <span className="ml-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">‹</span>
+            </div>
+            <div
+              className={`absolute right-0 top-0 bottom-0 z-10 w-12 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent transition-opacity ${reviewsCanScrollRight ? 'group-hover/reviews:opacity-100' : ''} opacity-0`}
+              onClick={() => reviewsScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+            >
+              <span className="mr-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">›</span>
+            </div>
+            <div ref={reviewsScrollRef} className="overflow-x-auto overflow-y-visible py-2 snap-x snap-mandatory scrollbar-hide">
+              <div className="flex gap-4 w-max">
+                {reviews.map((review) => (
+                  <div key={review.id} className="flex-shrink-0 w-44 sm:w-52 snap-start rounded-xl overflow-hidden border border-border/50 bg-card">
+                    {editingReviewId === review.id ? (
+                      <div className="p-3 space-y-2">
+                        <input
+                          type="number" min="0" max="10" step="0.1"
+                          value={editRating}
+                          onChange={(e) => setEditRating(e.target.value)}
+                          className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm"
+                          placeholder="Rating (0-10)"
                         />
-                      ) : (
-                        <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                          No image
+                        <textarea
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                          className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm min-h-16"
+                          placeholder="Comment (optional)"
+                        />
+                        <div className="flex gap-1">
+                          <Button size="sm" className="h-8 flex-1" onClick={() => handleUpdateReview(review.id)}>Save</Button>
+                          <Button size="sm" variant="ghost" className="h-8 flex-1" onClick={() => setEditingReviewId(null)}>Cancel</Button>
                         </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent px-3 pb-3 pt-10">
-                        <p className="text-white text-sm font-bold line-clamp-2 leading-tight">{movieInfo[review.tmdb_movie_id]?.title || `Movie #${review.tmdb_movie_id}`}</p>
-                        <p className="text-yellow-400 text-sm font-semibold mt-1">⭐ {review.rating}/10</p>
                       </div>
-                    </div>
-                    {review.comment && (
-                      <p className="text-sm text-muted-foreground px-3 py-2 line-clamp-2">{review.comment}</p>
-                    )}
-                    {isOwnProfile && (
-                      <div className="flex gap-2 px-3 pb-3">
-                        <Button size="sm" variant="outline" className="text-sm h-8 flex-1" onClick={() => {
-                          setEditingReviewId(review.id);
-                          setEditRating(String(review.rating));
-                          setEditComment(review.comment || "");
-                        }}>Edit</Button>
-                        <Button size="sm" variant="destructive" className="text-sm h-8 flex-1" onClick={() => handleDeleteReview(review.id)}>Delete</Button>
+                    ) : (
+                      <div>
+                        <div className="relative cursor-pointer" onClick={() => router.push(`/reviews?movie=${review.tmdb_movie_id}&user=${profileUserId}`)}>
+                          {movieInfo[review.tmdb_movie_id]?.poster ? (
+                            <img
+                              src={`https://image.tmdb.org/t/p/w342${movieInfo[review.tmdb_movie_id].poster}`}
+                              alt={movieInfo[review.tmdb_movie_id]?.title}
+                              className="w-full aspect-[2/3] object-cover"
+                            />
+                          ) : (
+                            <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">No image</div>
+                          )}
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent px-3 pb-3 pt-10">
+                            <p className="text-white text-sm font-bold line-clamp-2 leading-tight">{movieInfo[review.tmdb_movie_id]?.title || `Movie #${review.tmdb_movie_id}`}</p>
+                            <p className="text-yellow-400 text-sm font-semibold mt-1">⭐ {review.rating}/10</p>
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-xs text-muted-foreground px-3 py-2">
+                            {review.comment.length > 40 ? review.comment.slice(0, 40) + "..." : review.comment}
+                          </p>
+                        )}
+                        {isOwnProfile && (
+                          <div className="flex gap-2 px-3 pb-3">
+                            <Button size="sm" variant="outline" className="text-xs h-7 flex-1" onClick={() => {
+                              setEditingReviewId(review.id);
+                              setEditRating(String(review.rating));
+                              setEditComment(review.comment || "");
+                            }}>Edit</Button>
+                            <Button size="sm" variant="destructive" className="text-xs h-7 flex-1" onClick={() => handleDeleteReview(review.id)}>Delete</Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
         {/* Watchlist */}
         {isOwnProfile && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-bold">My Watchlist</h3>
-          </div>
-          {watchlist.length === 0 && <p className="text-muted-foreground text-base">Watchlist is empty.</p>}
-          <div className="overflow-x-auto pb-3">
-            <div className="flex gap-4 w-max">
-              {watchlist.slice(0, 20).map((item) => (
-                <div key={item.id} className="flex-shrink-0 w-40 sm:w-48 rounded-xl border border-border/50 overflow-hidden bg-card">
-                  {movieInfo[item.tmdb_movie_id]?.poster ? (
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movieInfo[item.tmdb_movie_id].poster}`}
-                      alt={movieInfo[item.tmdb_movie_id]?.title}
-                      className="w-full aspect-[2/3] object-cover cursor-pointer"
-                      onClick={() => router.push(`/movies/${item.tmdb_movie_id}`)}
-                    />
-                  ) : (
-                    <div
-                      className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm cursor-pointer"
-                      onClick={() => router.push(`/movies/${item.tmdb_movie_id}`)}
-                    >
-                      No image
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-2xl font-bold">My Watchlist</h3>
+              <span className="text-sm text-muted-foreground">{watchlist.length} filmes</span>
+            </div>
+            {watchlist.length === 0 && <p className="text-muted-foreground text-base">Watchlist is empty.</p>}
+            <div className="relative group/watchlist">
+              <div
+                className={`absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity ${watchlistCanScrollLeft ? 'group-hover/watchlist:opacity-100' : ''} opacity-0`}
+                onClick={() => watchlistScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+              >
+                <span className="ml-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">‹</span>
+              </div>
+              <div
+                className={`absolute right-0 top-0 bottom-0 z-10 w-12 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent transition-opacity ${watchlistCanScrollRight ? 'group-hover/watchlist:opacity-100' : ''} opacity-0`}
+                onClick={() => watchlistScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+              >
+                <span className="mr-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">›</span>
+              </div>
+              <div ref={watchlistScrollRef} className="overflow-x-auto overflow-y-visible py-2 snap-x snap-mandatory scrollbar-hide">
+                <div className="flex gap-4 w-max">
+                  {watchlist.map((item) => (
+                    <div key={item.id} className="flex-shrink-0 w-44 sm:w-52 snap-start rounded-xl border border-border/50 overflow-hidden bg-card">
+                      {movieInfo[item.tmdb_movie_id]?.poster ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w342${movieInfo[item.tmdb_movie_id].poster}`}
+                          alt={movieInfo[item.tmdb_movie_id]?.title}
+                          className="w-full aspect-[2/3] object-cover cursor-pointer"
+                          onClick={() => router.push(`/movies/${item.tmdb_movie_id}`)}
+                        />
+                      ) : (
+                        <div
+                          className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm cursor-pointer"
+                          onClick={() => router.push(`/movies/${item.tmdb_movie_id}`)}
+                        >No image</div>
+                      )}
+                      <div className="p-3 space-y-2">
+                        <p className="text-sm font-semibold line-clamp-1">{movieInfo[item.tmdb_movie_id]?.title || `Movie #${item.tmdb_movie_id}`}</p>
+                        <select
+                          value={item.status}
+                          onChange={(e) => handleUpdateWatchlistStatus(item.id, e.target.value)}
+                          className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-sm"
+                        >
+                          <option value="want_to_watch">Want to watch</option>
+                          <option value="watching">Watching</option>
+                          <option value="watched">Watched</option>
+                          <option value="dropped">Dropped</option>
+                        </select>
+                        <Button variant="destructive" size="sm" className="w-full text-sm h-8" onClick={() => handleRemoveWatchlist(item.id)}>
+                          Remove
+                        </Button>
+                      </div>
                     </div>
-                  )}
-                  <div className="p-3 space-y-2">
-                    <p className="text-sm font-semibold line-clamp-1">{movieInfo[item.tmdb_movie_id]?.title || `Movie #${item.tmdb_movie_id}`}</p>
-                    <select
-                      value={item.status}
-                      onChange={(e) => handleUpdateWatchlistStatus(item.id, e.target.value)}
-                      className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-sm"
-                    >
-                      <option value="want_to_watch">Want to watch</option>
-                      <option value="watching">Watching</option>
-                      <option value="watched">Watched</option>
-                      <option value="dropped">Dropped</option>
-                    </select>
-                    <Button variant="destructive" size="sm" className="w-full text-sm h-8" onClick={() => handleRemoveWatchlist(item.id)}>
-                      Remove
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
-        </div>
         )}
       </div>
 
