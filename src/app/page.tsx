@@ -423,7 +423,8 @@ function HomeContent() {
         <h1 className="flex flex-col items-start gap-1 text-xl sm:text-2xl font-bold tracking-tight sm:flex-row sm:items-baseline sm:gap-4 lg:gap-6">
           CritCine
           <span className="text-sm sm:text-base lg:text-[1.05rem] font-medium underline underline-offset-4 max-w-xl">
-            Plataforma criada para portifólio, sem fins lucrativos.
+            Plataforma criada para portfólio, sem fins lucrativos. Criado por: {}
+            <strong className="text-primary">Rafaello Ferrari</strong>
           </span>
         </h1>
         <div className="flex w-full flex-wrap gap-2 sm:gap-3 lg:w-auto lg:flex-nowrap">
