@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -205,4 +205,12 @@ function ReviewsContent() {
   );
 }
 
-export default ReviewsContent;
+function ReviewsPage() {
+  return (
+    <Suspense>
+      <ReviewsContent />
+    </Suspense>
+  );
+}
+
+export default ReviewsPage;
