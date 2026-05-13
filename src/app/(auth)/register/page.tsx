@@ -230,9 +230,9 @@ export default function RegisterPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+          {/* <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
             {loading ? "Creating account..." : "Sign up"}
-          </Button>
+          </Button> */}
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
