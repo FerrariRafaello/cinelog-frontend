@@ -27,6 +27,7 @@ export default function MoviePage() {
     const [providers, setProviders]=useState<any[]>([]);
     const [inWatchlist, setInWatchlist]=useState(false);
     const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
+    const [showAllReviews, setShowAllReviews] = useState(false);
     const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
 
@@ -256,6 +257,13 @@ export default function MoviePage() {
           >
             Profile
           </Button>
+          <Button
+            variant="ghost"
+            className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+            onClick={() => router.push("/reviews")}
+          >
+            Reviews
+          </Button>
         </div>
       </nav>
 
@@ -445,11 +453,22 @@ export default function MoviePage() {
         </section>
 
         <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
-          <h3 className="text-2xl font-bold tracking-tight">Reviews ({reviews.length})</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-2xl font-bold tracking-tight">Reviews ({reviews.length})</h3>
+            {reviews.length > 10 && (
+              <Button
+                variant="outline"
+                className="text-sm"
+                onClick={() => router.push(`/reviews?movie=${id}`)}
+              >
+                Ver todas as reviews
+              </Button>
+            )}
+          </div>
           {reviews.length === 0 && (
             <p className="text-muted-foreground text-sm sm:text-base">No reviews yet. Be the first!</p>
           )}
-          {reviews.map((review) => (
+          {reviews.slice(0, 10).map((review) => (
             <div key={review.id} className="p-4 rounded-xl border border-border space-y-2 bg-background/70">
               <div className="flex justify-between items-center gap-2">
                 <button
@@ -473,6 +492,15 @@ export default function MoviePage() {
               </button>
             </div>
           ))}
+          {reviews.length > 10 && (
+            <button
+              type="button"
+              onClick={() => router.push(`/reviews?movie=${id}`)}
+              className="w-full py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              + {reviews.length - 10} reviews restantes — Ver todas
+            </button>
+          )}
         </section>
       </main>
     </div>

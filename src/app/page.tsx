@@ -441,6 +441,13 @@ function HomeContent() {
           >
             Profile
           </Button>
+          <Button
+            variant="ghost"
+            className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-4 py-2 text-base font-medium text-foreground hover:border-primary/60 hover:bg-card transition-colors"
+            onClick={() => router.push("/reviews")}
+          >
+            Reviews
+          </Button>
           <LogoutDialog />
         </div>
       </nav>

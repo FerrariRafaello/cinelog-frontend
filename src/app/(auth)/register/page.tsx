@@ -18,6 +18,8 @@ export default function RegisterPage() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showTerms, setShowTerms] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     function getPasswordStrength(pwd: string): { label: string; color: string } {
       if (pwd.length === 0) return { label: "", color: "" };
@@ -69,6 +71,11 @@ export default function RegisterPage() {
 
     async function handleSubmit(e: React.SyntheticEvent) {
         e.preventDefault();
+        if (!termsAccepted) {
+          setShowTerms(true);
+          setLoading(false);
+          return;
+        }
         setLoading(true);
         setError("");
 
@@ -236,6 +243,59 @@ export default function RegisterPage() {
         </p>
       </div>
       </div>
+      {showTerms && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border/70 bg-card p-6 shadow-2xl space-y-4">
+            <h2 className="text-xl font-bold">Termos de Uso</h2>
+            <div className="max-h-48 overflow-y-auto text-sm text-muted-foreground leading-relaxed pr-1">
+              <p>
+                CritCine é uma plataforma para Reviews e Streaming gratuito de filmes,
+                criada para portfólio, desenvolvida por único programador e sem fins lucrativos.
+                Qualquer que seja a forma que você utilizar será de sua responsabilidade.
+              </p>
+              <p className="mt-3">
+                Ao criar uma conta você concorda que o CritCine não se responsabiliza
+                pelo uso indevido da plataforma, pelo conteúdo de terceiros exibido,
+                nem por qualquer dano direto ou indireto decorrente do uso.
+              </p>
+              <p className="mt-3">
+                Esta plataforma não hospeda conteúdo. Todos os dados de filmes vêm
+                da API pública do TMDB.
+              </p>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="w-4 h-4"
+              />
+              Li e concordo com os termos de uso
+            </label>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => { setShowTerms(false); setTermsAccepted(false); }}
+              >
+                Recusar
+              </Button>
+              <Button
+                type="button"
+                className="flex-1"
+                disabled={!termsAccepted}
+                onClick={() => {
+                  setShowTerms(false);
+                  handleSubmit({ preventDefault: () => {} } as any);
+                }}
+              >
+                Aceitar e criar conta
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
