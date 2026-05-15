@@ -37,6 +37,7 @@ function ReviewsContent() {
   const [searchMovie, setSearchMovie] = useState("");
   const [sort, setSort] = useState("newest");
   const [checked, setChecked] = useState(false);
+  const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -112,6 +113,14 @@ function ReviewsContent() {
     fetchReviews();
   }
 
+  function toggleExpand(id: number) {
+    setExpandedReviews((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
   if (!checked) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -153,7 +162,7 @@ function ReviewsContent() {
           {reviews.filter((r) => r.comment && r.comment.trim().length > 0).map((review) => {
             const movie = movieInfos[review.tmdb_movie_id];
             return (
-              <div key={review.id} className="flex gap-3 p-4 rounded-2xl border border-border/60 bg-card/70 min-h-96 md:h-[30rem]">
+              <div key={review.id} className="flex gap-3 p-4 rounded-2xl border border-border/60 bg-card/70 min-h-[12rem]">
                 <div
                   className="flex-shrink-0 w-16 sm:w-20 cursor-pointer"
                   onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}
@@ -191,9 +200,22 @@ function ReviewsContent() {
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-white/80 leading-relaxed break-words overflow-hidden mt-2">
-                      {review.comment}
-                    </p>
+                    {review.comment && (
+                      <div>
+                        <p className={`text-sm text-white/80 leading-relaxed break-words ${expandedReviews.has(review.id) ? "" : "line-clamp-3"}`}>
+                          {review.comment}
+                        </p>
+                        {review.comment.length > 120 && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(review.id)}
+                            className="text-xs text-primary hover:underline mt-1"
+                          >
+                            {expandedReviews.has(review.id) ? "Ver menos ↑" : "Ver mais ↓"}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

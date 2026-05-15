@@ -18,26 +18,28 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
   if (movieList.length === 0) return null;
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [hasScrolledRight, setHasScrolledRight] = useState(false);
+  const hasScrolledRef = useRef(false);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-
     function check() {
       if (!el) return;
-      setCanScrollLeft(el.scrollLeft > 1);
+      const scrolled = el.scrollLeft > 8;
+      if (scrolled) hasScrolledRef.current = true;
+      const atStart = el.scrollLeft <= 8;
+      if (atStart) {
+        hasScrolledRef.current = false;
+        setCanScrollLeft(false);
+      } else {
+        setCanScrollLeft(hasScrolledRef.current);
+      }
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
     }
-
-    const ro = new ResizeObserver(() => {
-      requestAnimationFrame(check);
-    });
-    ro.observe(el);
-
-    el.addEventListener("scroll", check);
-
+    el.addEventListener("scroll", check, { passive: true });
+    requestAnimationFrame(check);
     return () => {
-      ro.disconnect();
       el.removeEventListener("scroll", check);
     };
   }, [movieList]);
@@ -46,6 +48,10 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
     if (!scrollRef.current) return;
     const step = Math.max(scrollRef.current.clientWidth * 0.85, 280);
     scrollRef.current.scrollBy({ left: dir === "right" ? step : -step, behavior: "smooth" });
+    if (dir === "right") {
+      hasScrolledRef.current = true;
+      setCanScrollLeft(true);
+    }
   }
 
   return (
@@ -54,14 +60,16 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
         <h2 className="pl-2 pt-9 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">{title}</h2>
       </div>
       <div className="relative group/row">
-        <div
-          className={`absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity duration-200 group/arrow ${canScrollLeft ? 'group-hover/row:opacity-100' : ''} opacity-0`}
-          onClick={() => scroll("left")}
-        >
-          <span className="ml-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
-            ‹
-          </span>
-        </div>
+        {canScrollLeft && (
+          <div
+            className="absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity duration-200 group/arrow"
+            onClick={() => scroll("left")}
+          >
+            <span className="ml-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
+              ‹
+            </span>
+          </div>
+        )}
 
         <div
           className={`absolute right-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent transition-opacity duration-200 group/arrow ${canScrollRight ? 'group-hover/row:opacity-100' : ''} opacity-0`}
@@ -72,12 +80,12 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
           </span>
         </div>
 
-        <div ref={scrollRef} className="overflow-x-auto overflow-y-visible py-4 sm:py-5 snap-x snap-mandatory scrollbar-hide">
-          <div className="flex gap-4 sm:gap-5 w-max pr-6">
+        <div ref={scrollRef} className="overflow-x-auto overflow-y-visible overscroll-x-none py-4 sm:py-5 px-2 sm:px-3 scrollbar-hide">
+          <div className="flex gap-4 sm:gap-5 w-max pr-4">
             {movieList.map((movie) => (
               <div
                 key={movie.id}
-                className="group relative w-40 sm:w-48 lg:w-56 flex-shrink-0 snap-start cursor-pointer rounded-xl overflow-hidden hover:-translate-y-1 hover:scale-[1.02] hover:z-10 transition-all duration-200 will-change-transform"
+                className="group relative w-40 sm:w-48 lg:w-56 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 hover:-translate-y-1 hover:scale-[1.02] hover:z-10 transition-all duration-200 will-change-transform"
                 onClick={() => router.push(`/movies/${movie.id}`)}
               >
                 {movie.poster_path ? (
@@ -135,7 +143,14 @@ function HomeContent() {
   const [featuredPaused, setFeaturedPaused] = useState(false);
   const [genreSort, setGenreSort] = useState<"desc" | "asc">("desc");
   const [showGenreResults, setShowGenreResults] = useState(false);
-  const nowPlayingIds = new Set(nowPlaying.map((m) => m.id));
+  const nowPlayingIds = new Set(
+    nowPlaying
+      .filter((m) => {
+        const year = m.release_date ? new Date(m.release_date).getFullYear() : 0;
+        return year >= 2025;
+      })
+      .map((m) => m.id)
+  );
   const searchParams = useSearchParams();
   const trendingRef = useRef<HTMLDivElement>(null);
   const nowPlayingRef = useRef<HTMLDivElement>(null);
@@ -227,7 +242,7 @@ function HomeContent() {
     async function fetchTrending() {
       try {
         const resp = await api.get("/v1/tmdb/trending");
-        setTrending(resp.data.results.slice(0, 35));
+        setTrending(resp.data.results.slice(0, 40));
       } catch {
         setTrending([]);
       }
@@ -236,7 +251,7 @@ function HomeContent() {
     async function fetchNowPlaying() {
       try {
         const resp = await api.get("/v1/tmdb/now-playing");
-        setNowPlaying(resp.data.results.slice(0, 35));
+        setNowPlaying(resp.data.results.slice(0, 40));
       } catch {
         setNowPlaying([]);
       }
@@ -245,7 +260,7 @@ function HomeContent() {
     async function fetchTopRated() {
       try {
         const resp = await api.get("/v1/tmdb/top-rated");
-        setTopRated(resp.data.results.slice(0, 35));
+        setTopRated(resp.data.results.slice(0, 40));
       } catch {
         setTopRated([]);
       }
@@ -254,7 +269,7 @@ function HomeContent() {
     async function fetchAnimation() {
       try {
         const resp = await api.get("/v1/tmdb/animation");
-        setAnimation(resp.data.results.slice(0, 35));
+        setAnimation(resp.data.results.slice(0, 40));
       } catch {
         setAnimation([]);
       }
@@ -287,7 +302,7 @@ function HomeContent() {
         }
 
         const resp = await api.get("/v1/tmdb/for-you", { params: { genres: genreIds } });
-        setForYou(resp.data.results.slice(0, 35));
+        setForYou(resp.data.results.slice(0, 40));
       } catch {
         setForYou([]);
       }
@@ -296,7 +311,7 @@ function HomeContent() {
     async function fetchClassics() {
       try {
         const resp = await api.get("/v1/tmdb/classics");
-        setClassics(resp.data.results.slice(0, 35));
+        setClassics(resp.data.results.slice(0, 40));
       } catch {
         setClassics([]);
       }

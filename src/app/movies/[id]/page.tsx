@@ -58,24 +58,25 @@ export default function MoviePage() {
   }, [id]);
 
     useEffect(() => {
-      const el = castScrollRef.current;
-      if (!el) return;
+  const el = castScrollRef.current;
+  if (!el) return;
 
-      function check() {
-        if (!el) return;
-        setCastCanScrollLeft(el.scrollLeft > 1);
-        setCastCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
-      }
+  function check() {
+    if (!el) return;
+    setCastCanScrollLeft(el.scrollLeft > 1);
+    setCastCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  }
 
-      const ro = new ResizeObserver(() => requestAnimationFrame(check));
-      ro.observe(el);
-      el.addEventListener("scroll", check);
+  const ro = new ResizeObserver(() => requestAnimationFrame(check));
+  ro.observe(el);
+  el.addEventListener("scroll", check, { passive: true });
+  requestAnimationFrame(check);
 
-      return () => {
-        ro.disconnect();
-        el.removeEventListener("scroll", check);
-      };
-    }, [credits.cast]);
+  return () => {
+    ro.disconnect();
+    el.removeEventListener("scroll", check);
+  };
+}, [credits.cast]);
 
     async function fetchMovie() {
         try{
@@ -367,24 +368,28 @@ export default function MoviePage() {
         </div>
       </div>
 
-      <main className="relative z-20 -mt-16 sm:-mt-24 max-w-6xl mx-auto px-4 sm:px-8 pb-10 sm:pb-12 space-y-3 sm:space-y-4">
+      <main className="relative z-20 -mt-8 sm:-mt-70 max-w-6xl mx-auto px-4 sm:px-8 pb-10 sm:pb-12 space-y-8 sm:space-y-10">
 
         {credits.cast.length > 0 && (
           <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
             <h3 className="text-2xl font-bold tracking-tight">Cast</h3>
             <div className="relative group/cast">
-              <div
-                className={`absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-card/90 to-transparent transition-opacity ${castCanScrollLeft ? 'group-hover/cast:opacity-100' : ''} opacity-0`}
-                onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
-              >
-                <span className="ml-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">‹</span>
-              </div>
-              <div
-                className={`absolute right-0 top-0 bottom-0 z-10 w-12 flex items-center justify-end cursor-pointer bg-gradient-to-l from-card/90 to-transparent transition-opacity ${castCanScrollRight ? 'group-hover/cast:opacity-100' : ''} opacity-0`}
-                onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
-              >
-                <span className="mr-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">›</span>
-              </div>
+              {castCanScrollLeft && (
+                <div
+                  className="absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-card/90 to-transparent opacity-0 group-hover/cast:opacity-100 transition-opacity"
+                  onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+                >
+                  <span className="ml-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">‹</span>
+                </div>
+              )}
+              {castCanScrollRight && (
+                <div
+                  className="absolute right-0 top-0 bottom-0 z-10 w-12 flex items-center justify-end cursor-pointer bg-gradient-to-l from-card/90 to-transparent opacity-0 group-hover/cast:opacity-100 transition-opacity"
+                  onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+                >
+                  <span className="mr-2 text-[2rem] text-zinc-400 hover:text-zinc-300 leading-none">›</span>
+                </div>
+              )}
               <div ref={castScrollRef} className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
                 {credits.cast.slice(0, 10).map((actor) => (
                   <a
