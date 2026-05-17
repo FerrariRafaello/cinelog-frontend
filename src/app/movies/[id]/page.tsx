@@ -281,9 +281,9 @@ export default function MoviePage() {
 
         <div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-8 ${movie.poster_path ? "pt-8 sm:pt-10 pb-16 sm:pb-20" : "py-8 sm:py-10"}`}>
           <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-xl p-4 sm:p-6">
-            <div className="flex flex-col lg:flex-row gap-5 sm:gap-7">
+            <div className="flex flex-col md:flex-row gap-5 sm:gap-7 items-start">
               {movie.poster_path && (
-                <div className="w-56 sm:w-64 lg:w-72 aspect-[4/5] mx-auto lg:mx-0 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-border/40 shadow-lg">
+                <div className="w-40 sm:w-56 md:w-64 lg:w-72 aspect-[2/3] mx-auto md:mx-0 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-border/40 shadow-lg">
                   <img
                     src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
                     alt={movie.title}

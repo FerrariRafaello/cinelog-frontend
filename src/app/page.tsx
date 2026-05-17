@@ -121,6 +121,51 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
 
 function HomeContent() {
   const router = useRouter();
+  // Top 10 scroll states
+  const [providers, setProviders] = useState<any[]>([]);
+  const top10Ref = useRef<HTMLDivElement>(null);
+  const [top10CanScrollLeft, setTop10CanScrollLeft] = useState(false);
+  const [top10CanScrollRight, setTop10CanScrollRight] = useState(false);
+  const top10HasScrolledRef = useRef(false);
+  const [top10, setTop10] = useState<Movie[]>([]);
+  useEffect(() => {
+    if (top10.length === 0) return;
+    let cleanup: (() => void) | null = null;
+
+    const attach = () => {
+      const el = top10Ref.current;
+      if (!el) return;
+
+      function check() {
+        const atStart = el!.scrollLeft <= 8;
+        const atEnd = el!.scrollLeft + el!.clientWidth >= el!.scrollWidth - 10;
+        setTop10CanScrollLeft(!atStart);
+        setTop10CanScrollRight(!atEnd);
+      }
+
+      const ro = new ResizeObserver(() => requestAnimationFrame(check));
+      ro.observe(el);
+      el.addEventListener("scroll", check, { passive: true });
+      check();
+
+      cleanup = () => {
+        ro.disconnect();
+        el.removeEventListener("scroll", check);
+      };
+    };
+
+    // Tenta várias vezes para garantir que imagens carregaram
+    const t1 = setTimeout(attach, 100);
+    const t2 = setTimeout(attach, 500);
+    const t3 = setTimeout(attach, 1000);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+      cleanup?.();
+    };
+  }, [top10]);
   useInactivityLogout(() => router.push("/login"));
   const [query, setQuery] = useState("");
   const [genreQuery, setGenreQuery] = useState("Action");
@@ -131,6 +176,7 @@ function HomeContent() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [trending, setTrending] = useState<Movie[]>([]);
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
+  // ...existing code...
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [animation, setAnimation] = useState<Movie[]>([]);
   const [forYou, setForYou] = useState<Movie[]>([]);
@@ -257,6 +303,15 @@ function HomeContent() {
       }
     }
 
+    async function fetchTop10() {
+      try {
+        const resp = await api.get("/v1/tmdb/top10-today");
+        setTop10(resp.data.results.slice(0, 10));
+      } catch {
+        setTop10([]);
+      }
+    }
+
     async function fetchTopRated() {
       try {
         const resp = await api.get("/v1/tmdb/top-rated");
@@ -317,13 +372,24 @@ function HomeContent() {
       }
     }
 
+    async function fetchProviders() {
+      try {
+        const resp = await api.get("/v1/tmdb/providers");
+        setProviders(resp.data);
+      } catch {
+        setProviders([]);
+      }
+    }
+
     Promise.allSettled([
       fetchTrending(),
       fetchNowPlaying(),
+      fetchTop10(),
       fetchTopRated(),
       fetchAnimation(),
       fetchForYou(),
       fetchClassics(),
+      fetchProviders(),
     ]).finally(() => {
       setInitialLoading(false);
     });
@@ -661,8 +727,8 @@ function HomeContent() {
                         </>
                       )}
 
-                      <div className="relative z-10 min-h-full w-full px-6 py-6 sm:px-10 sm:py-8 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-stretch justify-center sm:translate-y-4 lg:translate-y-20 gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
-                        <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20 h-full">
+                      <div className="relative z-10 min-h-full w-full px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
+                        <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20">
                           <img
                             src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
                             alt={featuredMovie.title}
@@ -673,7 +739,7 @@ function HomeContent() {
                         <div className="w-full max-w-4xl flex flex-col items-center lg:items-start justify-center">
                           <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
                           <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
-                          <p className="mt-3 text-sm sm:text-base lg:text-lg text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
+                          <p className="mt-3 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
 
                           <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
                             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
@@ -725,20 +791,21 @@ function HomeContent() {
                           </div>
                         </div>
 
-                        {featured.length > 1 && (
-                          <div className="absolute bottom-4 sm:bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2 px-4 max-w-full">
-                            {featured.map((item, idx) => (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => setFeaturedIndex(idx)}
-                                className={`h-1.5 rounded-full transition-all ${idx === featuredIndex ? "w-8 bg-primary" : "w-3 bg-white/30 hover:bg-white/50"}`}
-                                aria-label={`Go to featured slide ${idx + 1}`}
-                              />
-                            ))}
-                          </div>
-                        )}
                       </div>
+
+                      {featured.length > 1 && (
+                        <div className="absolute bottom-25 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2">
+                          {featured.map((item, idx) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setFeaturedIndex(idx)}
+                              className={`h-1.5 rounded-full transition-all ${idx === featuredIndex ? "w-8 bg-primary" : "w-3 bg-white/30 hover:bg-white/50"}`}
+                              aria-label={`Go to featured slide ${idx + 1}`}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -749,7 +816,121 @@ function HomeContent() {
             <div className="relative z-20 -mt-16 sm:-mt-20 lg:-mt-40">
               <MovieRow title="Trending This Week" movieList={trending} scrollRef={trendingRef} router={router} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Now Playing" movieList={nowPlaying} scrollRef={nowPlayingRef} router={router} nowPlayingIds={nowPlayingIds} />
+
+              {top10.length > 0 && (
+                <div className="space-y-1 overflow-visible px-4 sm:px-8 lg:px-12">
+                  <div className="pl-2 pt-9 flex flex-col">
+                    <p className="text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold">Top 10</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-6xl sm:text-7xl font-black tracking-tight text-foreground">TOP</span>
+                      <span className="text-6xl sm:text-7xl font-black tracking-tight text-primary">10</span>
+                      <span className="text-base sm:text-lg font-semibold text-foreground/60 ml-2">Today in Brazil</span>
+                    </div>
+                  </div>
+                  <div className="relative group/top10">
+                    {top10CanScrollLeft && (
+                      <div
+                        className="absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent opacity-0 group-hover/top10:opacity-100 transition-opacity duration-200"
+                        onClick={() => {
+                          const step = Math.max((top10Ref.current?.clientWidth ?? 400) * 0.85, 400);
+                          top10Ref.current?.scrollBy({ left: -step, behavior: "smooth" });
+                        }}
+                      >
+                        <span className="ml-2 text-[3.2rem] font-normal text-zinc-400 hover:text-zinc-300 leading-none">‹</span>
+                      </div>
+                    )}
+
+                    {top10CanScrollRight && (
+                      <div
+                        className="absolute right-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent opacity-0 group-hover/top10:opacity-100 transition-opacity duration-200"
+                        onClick={() => {
+                          const step = Math.max((top10Ref.current?.clientWidth ?? 400) * 0.85, 400);
+                          top10Ref.current?.scrollBy({ left: step, behavior: "smooth" });
+                        }}
+                      >
+                        <span className="mr-2 text-[3.2rem] font-normal text-zinc-400 hover:text-zinc-300 leading-none">›</span>
+                      </div>
+                    )}
+                    <div ref={top10Ref} className="overflow-x-auto overflow-y-hidden py-4 sm:py-5 scrollbar-hide">
+                      <div className="flex w-max pr-6 gap-2">
+                        {top10.map((movie, idx) => (
+                          <div
+                            key={movie.id}
+                            className="relative flex items-end cursor-default flex-shrink-0"
+                            style={{ marginLeft: idx === 0 ? "2rem" : "0" }}
+                          >
+                            <span
+                              className="relative z-0 font-black select-none pointer-events-none flex-shrink-0"
+                              style={{
+                                fontSize: "clamp(5rem, 9vw, 9rem)",
+                                color: "transparent",
+                                WebkitTextStroke: "3px rgba(255,255,255,0.55)",
+                                lineHeight: 1,
+                                width: idx >= 9 ? "8rem" : "6rem",
+                                textAlign: "right",
+                                paddingRight: "0.75rem",
+                                WebkitMaskImage: "linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)",
+                                maskImage: "linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 100%)",
+                              }}
+                            >
+                              {idx + 1}
+                            </span>
+                            <div
+                              className="relative z-10 w-52 sm:w-60 lg:w-64 flex-shrink-0 rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 transition-all duration-200 cursor-pointer pointer-events-auto"
+                              onClick={() => router.push(`/movies/${movie.id}`)}
+                            >
+                              {movie.poster_path ? (
+                                <img
+                                  src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                                  alt={movie.title}
+                                  className="w-full aspect-[2/3] object-cover"
+                                />
+                              ) : (
+                                <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">No image</div>
+                              )}
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-10">
+                                <p className="text-white text-sm font-bold line-clamp-2 leading-tight">{movie.title}</p>
+                                <p className="text-yellow-400 text-sm font-medium mt-1">⭐ {movie.vote_average.toFixed(1)}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <MovieRow title={forYouTitle} movieList={forYou} scrollRef={forYouRef} router={router} nowPlayingIds={nowPlayingIds} />
+
+              {providers.length > 0 && (
+                <div className="space-y-1 overflow-visible px-4 sm:px-8 lg:px-12">
+                  <h2 className="pl-2 pt-9 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">
+                    Streaming
+                  </h2>
+                  <div className="flex flex-wrap gap-4 sm:gap-6 py-4 pl-2">
+                    {providers.map((p: any) => (
+                      <button
+                        key={p.provider_id}
+                        type="button"
+                        onClick={() => router.push(`/streaming/${p.provider_id}`)}
+                        className="flex flex-col items-center gap-2 hover:scale-110 transition-transform"
+                      >
+                        <img
+                          src={`https://image.tmdb.org/t/p/w300${p.logo_path}`}
+                          alt={p.provider_name}
+                          className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover ring-2 ring-border/40 hover:ring-primary/60 transition-all shadow-lg"
+                          loading="lazy"
+                          style={{ background: '#fff' }}
+                        />
+                        <span className="text-base sm:text-lg font-semibold text-white text-center w-28 line-clamp-2">
+                          {p.provider_name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <MovieRow title="Worth Watching Again" movieList={topRated} scrollRef={topRatedRef} router={router} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Animation" movieList={animation} scrollRef={animationRef} router={router} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Classics" movieList={classics} scrollRef={classicsRef} router={router} nowPlayingIds={nowPlayingIds} />
