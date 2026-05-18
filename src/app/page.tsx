@@ -130,40 +130,41 @@ function HomeContent() {
   const [top10, setTop10] = useState<Movie[]>([]);
   useEffect(() => {
     if (top10.length === 0) return;
-    let cleanup: (() => void) | null = null;
 
-    const attach = () => {
+    let ro: ResizeObserver | null = null;
+    let attached = false;
+
+    function check() {
       const el = top10Ref.current;
       if (!el) return;
+      const atStart = el.scrollLeft <= 8;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10;
+      setTop10CanScrollLeft(!atStart);
+      setTop10CanScrollRight(!atEnd);
+    }
 
-      function check() {
-        const atStart = el!.scrollLeft <= 8;
-        const atEnd = el!.scrollLeft + el!.clientWidth >= el!.scrollWidth - 10;
-        setTop10CanScrollLeft(!atStart);
-        setTop10CanScrollRight(!atEnd);
-      }
+    function attach() {
+      const el = top10Ref.current;
+      if (!el || attached) return;
+      attached = true;
 
-      const ro = new ResizeObserver(() => requestAnimationFrame(check));
+      ro = new ResizeObserver(() => requestAnimationFrame(check));
       ro.observe(el);
       el.addEventListener("scroll", check, { passive: true });
-      check();
+      requestAnimationFrame(check);
+    }
 
-      cleanup = () => {
-        ro.disconnect();
-        el.removeEventListener("scroll", check);
-      };
-    };
-
-    // Tenta várias vezes para garantir que imagens carregaram
     const t1 = setTimeout(attach, 100);
-    const t2 = setTimeout(attach, 500);
-    const t3 = setTimeout(attach, 1000);
+    const t2 = setTimeout(attach, 600);
+    const t3 = setTimeout(attach, 1500);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      cleanup?.();
+      ro?.disconnect();
+      const el = top10Ref.current;
+      if (el) el.removeEventListener("scroll", check);
     };
   }, [top10]);
   useInactivityLogout(() => router.push("/login"));
@@ -581,9 +582,9 @@ function HomeContent() {
     <div className="min-h-screen bg-background">
       <NavBar showLogout />
 
-      <main className="py-8 sm:py-10 space-y-14 sm:space-y-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 space-y-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
+      <main className="py-4 sm:py-8 space-y-8 sm:space-y-14 md:space-y-16">
+        <div className="max-w-5xl w-full mx-auto px-2 sm:px-4 md:px-8 space-y-2 sm:space-y-3">
+          <div className="flex flex-col gap-2 sm:gap-3 lg:flex-row lg:items-stretch w-full">
             <div className="order- lg:order- flex flex-col sm:flex-row gap-3 items-stretch lg:w-auto">
               <div className="h-12 sm:h-14 rounded-xl border border-border bg-card/70 p-1 sm:w-72">
                 <select
@@ -639,7 +640,7 @@ function HomeContent() {
                 </div>
               )}
             </div>
-            <form onSubmit={handleSearch} className="order-1 lg:order-2 flex flex-col sm:flex-row gap-3 items-stretch flex-1">
+            <form onSubmit={handleSearch} className="order-1 lg:order-2 flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch flex-1 w-full">
               <div className="flex-1 h-14 rounded-xl border border-border bg-card/70 p-1">
                 <Input
                   value={query}
@@ -648,17 +649,19 @@ function HomeContent() {
                   className="h-full text-base sm:text-lg border-border/70 bg-background"
                 />
               </div>
-              <Button type="submit" disabled={loading} className="h-14 w-full sm:w-auto px-6 sm:px-7 text-base sm:text-lg">
-                {loading ? "Searching..." : "Search"}
-              </Button>
+              <div className="h-12 sm:h-14 rounded-xl border border-border bg-card/70 p-1 sm:w-auto flex items-center">
+                <Button type="submit" disabled={loading} className="h-full w-full sm:w-auto px-4 sm:px-5 text-sm">
+                  {loading ? "Searching..." : "Search"}
+                </Button>
+              </div>
             </form>
           </div>
         </div>
 
         {movies.length > 0 && (
-          <div className="space-y-4 mx-4 sm:mx-8 lg:mx-12">
+          <div className="space-y-2 sm:space-y-4 mx-2 sm:mx-4 md:mx-8 lg:mx-12">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Search Results</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 sm:gap-5 pt-2">
+            <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4 md:gap-5 pt-2">
               {movies.map((movie) => (
                 <div
                   key={movie.id}
@@ -689,145 +692,146 @@ function HomeContent() {
         {movies.length === 0 && (
           <>
             {featuredMovie && (
-              <section className="relative -mt-6 sm:-mt-10 lg:-mt-12">
+              <section className="relative -mt-4 sm:-mt-8 lg:-mt-12">
                 <div className="pointer-events-none absolute top-0 left-0 right-0 h-16 z-10 bg-gradient-to-b from-background to-transparent" />
-                <div className="relative h-[clamp(36rem,84svh,52rem)] sm:h-[clamp(40rem,82svh,56rem)] lg:h-[clamp(36rem,82vh,55rem)] overflow-hidden rounded-2xl">
-                  <div className="h-full overflow-hidden">
-                    <div className="relative min-h-full overflow-hidden rounded-2xl border border-border/60 group/featured" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(https://image.tmdb.org/t/p/w780${featuredMovie.poster_path})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                          filter: "blur(8px) brightness(0.58)",
-                          transform: "scale(1.08)",
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-r from-black/62 via-black/34 to-black/52" />
 
-                      {featured.length > 1 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={goToPrevFeatured}
-                            className="hidden sm:flex absolute left-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-start bg-gradient-to-r from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
-                            aria-label="Previous featured movie"
-                          >
-                            <span className="ml-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">‹</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={goToNextFeatured}
-                            className="hidden sm:flex absolute right-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-end bg-gradient-to-l from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
-                            aria-label="Next featured movie"
-                          >
-                            <span className="mr-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">›</span>
-                          </button>
-                        </>
-                      )}
+                <div className="relative overflow-hidden rounded-2xl border border-border/60 group/featured" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `url(https://image.tmdb.org/t/p/w780${featuredMovie.poster_path})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      filter: "blur(8px) brightness(0.58)",
+                      transform: "scale(1.08)",
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/62 via-black/34 to-black/52" />
 
-                      <div className="relative z-10 min-h-full w-full px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-12 pb-16 sm:pb-20 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-5 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left">
-                        <div className="w-32 sm:w-40 md:w-44 lg:w-60 xl:w-[17rem] 2xl:w-72 aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-white/15 bg-black/20">
-                          <img
-                            src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
-                            alt={featuredMovie.title}
-                            className="w-full h-full object-cover object-center"
-                          />
-                        </div>
+                  {featured.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={goToPrevFeatured}
+                        className="hidden sm:flex absolute left-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-start bg-gradient-to-r from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
+                        aria-label="Previous featured movie"
+                      >
+                        <span className="ml-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">‹</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goToNextFeatured}
+                        className="hidden sm:flex absolute right-0 top-0 bottom-0 z-20 w-16 sm:w-20 items-center justify-end bg-gradient-to-l from-black/65 to-transparent opacity-0 group-hover/featured:opacity-100 transition-opacity duration-200"
+                        aria-label="Next featured movie"
+                      >
+                        <span className="mr-3 text-[2.8rem] font-normal text-zinc-400 hover:text-zinc-300 transition-colors leading-none">›</span>
+                      </button>
+                    </>
+                  )}
 
-                        <div className="w-full max-w-4xl flex flex-col items-center lg:items-start justify-center">
-                          <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
-                          <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
-                          <p className="mt-3 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
-
-                          <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
-                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
-                              {featuredTrailer && (
-                                <a
-                                  href={`https://www.youtube.com/watch?v=${featuredTrailer}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white hover:bg-red-700 transition-colors"
-                                >
-                                  Watch Trailer
-                                </a>
-                              )}
-                              <Button
-                                variant="secondary"
-                                className="min-h-11 px-4 sm:px-5 lg:h-12 text-sm sm:text-base lg:text-lg"
-                                onClick={() => router.push(`/movies/${featuredMovie.id}`)}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-
-                            {featuredCredits.length > 0 && (
-                              <div className="mt-5 flex flex-wrap gap-6 justify-center lg:justify-start">
-                                {featuredCredits.slice(0, 4).map((actor) => (
-                                  <a
-                                    key={actor.id}
-                                    href={`https://www.google.com/search?q=${encodeURIComponent(`${actor.name} actor`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity"
-                                  >
-                                    {actor.profile_path ? (
-                                      <img
-                                        src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
-                                        alt={actor.name}
-                                        className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-2 ring-white/20"
-                                      />
-                                    ) : (
-                                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center text-white/60 text-xl font-bold">
-                                        {actor.name.charAt(0)}
-                                      </div>
-                                    )}
-                                    <span className="text-[11px] sm:text-xs text-white/70 text-center line-clamp-2 leading-tight w-20 sm:w-24">{actor.name}</span>
-                                  </a>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                      </div>
-
-                      {featured.length > 1 && (
-                        <div className="absolute bottom-25 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2">
-                          {featured.map((item, idx) => (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => setFeaturedIndex(idx)}
-                              className={`h-1.5 rounded-full transition-all ${idx === featuredIndex ? "w-8 bg-primary" : "w-3 bg-white/30 hover:bg-white/50"}`}
-                              aria-label={`Go to featured slide ${idx + 1}`}
-                            />
-                          ))}
-                        </div>
+                  <div className="relative z-10 w-full px-2 py-4 sm:px-6 sm:py-8 md:px-10 md:py-10 lg:px-14 lg:py-12 pb-8 sm:pb-16 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-4 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left xl:gap-16 lg:text-left lg:py-12">
+                    {/* Poster fixo, mas muda junto com o filme em destaque */}
+                    <div className="w-32 xs:w-40 sm:w-56 md:w-64 lg:w-80 xl:w-[22rem] 2xl:w-[26rem] aspect-[2/3] flex-shrink-0 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/15 bg-black/20 mx-auto lg:mx-0 carousel-poster">
+                      {featuredMovie && (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
+                          alt={featuredMovie.title}
+                          className="w-full h-full object-cover object-center"
+                        />
                       )}
                     </div>
+
+                    <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl flex flex-col items-center lg:items-start justify-center">
+                      <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
+                      <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
+                      <p className="mt-3 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
+
+                      <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
+                          {featuredTrailer && (
+                            <a
+                              href={`https://www.youtube.com/watch?v=${featuredTrailer}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white hover:bg-red-700 transition-colors"
+                            >
+                              Watch Trailer
+                            </a>
+                          )}
+                          <Button
+                            variant="secondary"
+                            className="min-h-11 px-4 sm:px-5 lg:h-12 text-sm sm:text-base lg:text-lg"
+                            onClick={() => router.push(`/movies/${featuredMovie.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+
+                        {featuredCredits.length > 0 && (
+                          <div className="mt-5 flex flex-wrap gap-6 justify-center lg:justify-start">
+                            {featuredCredits.slice(0, 4).map((actor) => (
+                              <a
+                                key={actor.id}
+                                href={`https://www.google.com/search?q=${encodeURIComponent(`${actor.name} actor`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex flex-col items-center gap-1.5 hover:opacity-80 transition-opacity"
+                              >
+                                {actor.profile_path ? (
+                                  <img
+                                    src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
+                                    alt={actor.name}
+                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover ring-2 ring-white/20"
+                                  />
+                                ) : (
+                                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center text-white/60 text-xl font-bold">
+                                    {actor.name.charAt(0)}
+                                  </div>
+                                )}
+                                <span className="text-[11px] sm:text-xs text-white/70 text-center line-clamp-2 leading-tight w-20 sm:w-24">{actor.name}</span>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                   </div>
-                </div>
+                    {/* dots dentro do carrossel */}
+                    {featured.length > 1 && (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2">
+                        {featured.map((item, idx) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setFeaturedIndex(idx)}
+                            className={`h-1.5 rounded-full transition-all ${idx === featuredIndex ? "w-8 bg-primary" : "w-3 bg-white/30 hover:bg-white/50"}`}
+                            aria-label={`Go to featured slide ${idx + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                 <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-25 bg-gradient-to-t from-background to-transparent rounded-b-2xl" />
               </section>
             )}
 
-            <div className="relative z-20 -mt-16 sm:-mt-20 lg:-mt-40">
+            <div className="relative z-20 -mt-12 sm:-mt-20 lg:-mt-32">
               <MovieRow title="Trending This Week" movieList={trending} scrollRef={trendingRef} router={router} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Now Playing" movieList={nowPlaying} scrollRef={nowPlayingRef} router={router} nowPlayingIds={nowPlayingIds} />
 
               {top10.length > 0 && (
-                <div className="space-y-1 overflow-visible px-4 sm:px-8 lg:px-12">
-                  <div className="pl-2 pt-9 flex flex-col">
+                <div className="space-y-1 overflow-visible px-2 sm:px-4 md:px-8 lg:px-12">
+                  <div className="pl-1 sm:pl-2 pt-6 sm:pt-9 flex flex-col">
                     <p className="text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold">Top 10</p>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
                       <span className="text-6xl sm:text-7xl font-black tracking-tight text-foreground">TOP</span>
                       <span className="text-6xl sm:text-7xl font-black tracking-tight text-primary">10</span>
                       <span className="text-base sm:text-lg font-semibold text-foreground/60 ml-2">Today in Brazil</span>
                     </div>
                   </div>
-                  <div className="relative group/top10">
+                  <div className="relative group/top10 min-w-0">
                     {top10CanScrollLeft && (
                       <div
                         className="absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent opacity-0 group-hover/top10:opacity-100 transition-opacity duration-200"
@@ -851,8 +855,8 @@ function HomeContent() {
                         <span className="mr-2 text-[3.2rem] font-normal text-zinc-400 hover:text-zinc-300 leading-none">›</span>
                       </div>
                     )}
-                    <div ref={top10Ref} className="overflow-x-auto overflow-y-hidden py-4 sm:py-5 scrollbar-hide">
-                      <div className="flex w-max pr-6 gap-2">
+                    <div ref={top10Ref} className="overflow-x-auto overflow-y-hidden py-2 sm:py-4 scrollbar-hide min-w-0">
+                      <div className="flex w-max pr-2 sm:pr-6 gap-1 sm:gap-2">
                         {top10.map((movie, idx) => (
                           <div
                             key={movie.id}
@@ -876,7 +880,7 @@ function HomeContent() {
                               {idx + 1}
                             </span>
                             <div
-                              className="relative z-10 w-52 sm:w-60 lg:w-64 flex-shrink-0 rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 transition-all duration-200 cursor-pointer pointer-events-auto"
+                              className="relative z-10 w-56 sm:w-64 lg:w-72 flex-shrink-0 rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 transition-all duration-200 cursor-pointer pointer-events-auto"
                               onClick={() => router.push(`/movies/${movie.id}`)}
                             >
                               {movie.poster_path ? (
@@ -904,11 +908,11 @@ function HomeContent() {
               <MovieRow title={forYouTitle} movieList={forYou} scrollRef={forYouRef} router={router} nowPlayingIds={nowPlayingIds} />
 
               {providers.length > 0 && (
-                <div className="space-y-1 overflow-visible px-4 sm:px-8 lg:px-12">
+                <div className="space-y-1 overflow-visible px-2 sm:px-4 md:px-8 lg:px-12">
                   <h2 className="pl-2 pt-9 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">
                     Streaming
                   </h2>
-                  <div className="flex flex-wrap gap-4 sm:gap-6 py-4 pl-2">
+                  <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-6 py-2 sm:py-4 pl-1 sm:pl-2">
                     {providers.map((p: any) => (
                       <button
                         key={p.provider_id}
@@ -919,7 +923,7 @@ function HomeContent() {
                         <img
                           src={`https://image.tmdb.org/t/p/w300${p.logo_path}`}
                           alt={p.provider_name}
-                          className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover ring-2 ring-border/40 hover:ring-primary/60 transition-all shadow-lg"
+                          className="w-20 h-20 xs:w-28 xs:h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full object-cover ring-0 hover:ring-2 hover:ring-primary/60 transition-all shadow-lg"
                           loading="lazy"
                           style={{ background: '#fff' }}
                         />
@@ -938,9 +942,9 @@ function HomeContent() {
           </>
         )}
 
-        <section className="relative mt-16 px-6 sm:px-12 py-16 sm:py-18">
+        <section className="relative mt-8 sm:mt-16 px-2 sm:px-6 md:px-12 py-8 sm:py-16 md:py-18">
           <div className="pointer-events-none absolute inset-x-0 top-0 -bottom-12 blur-sm [mask-image:linear-gradient(to_bottom,black_0%,black_88%,transparent_100%)] bg-[radial-gradient(circle_at_20%_20%,oklch(0.72_0.14_42_/_0.22),transparent_55%),radial-gradient(circle_at_80%_70%,oklch(0.64_0.11_220_/_0.18),transparent_55%)]" />
-          <div className="relative max-w-4xl mx-auto rounded-2xl border border-white/10 bg-black/35 backdrop-blur-xl shadow-[0_10px_45px_-15px_rgba(0,0,0,0.8)] p-7 sm:p-10 text-center space-y-6">
+          <div className="relative max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto rounded-2xl border border-white/10 bg-black/35 backdrop-blur-xl shadow-[0_10px_45px_-15px_rgba(0,0,0,0.8)] p-4 sm:p-7 md:p-10 text-center space-y-4 sm:space-y-6">
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Sobre o CritCine</h2>
             <p className="text-base sm:text-lg text-foreground/80 leading-relaxed">
               CritCine é um projeto pessoal de portfólio, criado por{" "}

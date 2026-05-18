@@ -378,13 +378,13 @@ function ProfileContent() {
                             <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">No image</div>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent px-3 pb-3 pt-10">
-                            <p className="text-white text-sm font-bold line-clamp-2 leading-tight">{movieInfo[review.tmdb_movie_id]?.title || `Movie #${review.tmdb_movie_id}`}</p>
-                            <p className="text-yellow-400 text-sm font-semibold mt-1">⭐ {review.rating}/10</p>
+                            <p className="text-white text-base font-bold line-clamp-2 leading-tight">{movieInfo[review.tmdb_movie_id]?.title || `Movie #${review.tmdb_movie_id}`}</p>
+                            <p className="text-yellow-400 text-base font-semibold mt-1">⭐ {review.rating}/10</p>
                           </div>
                         </div>
                         {review.comment && (
-                          <p className="text-xs text-muted-foreground px-3 py-2">
-                            {review.comment.length > 40 ? review.comment.slice(0, 40) + "..." : review.comment}
+                          <p className="text-sm text-muted-foreground px-3 py-2 overflow-hidden break-words">
+                            {review.comment.slice(0, 60)}{review.comment.length > 60 ? "..." : ""}
                           </p>
                         )}
                         {isOwnProfile && (
@@ -445,7 +445,7 @@ function ProfileContent() {
                         >No image</div>
                       )}
                       <div className="p-3 space-y-2">
-                        <p className="text-sm font-semibold line-clamp-1">{movieInfo[item.tmdb_movie_id]?.title || `Movie #${item.tmdb_movie_id}`}</p>
+                        <p className="text-base font-semibold line-clamp-1">{movieInfo[item.tmdb_movie_id]?.title || `Movie #${item.tmdb_movie_id}`}</p>
                         <select
                           value={item.status}
                           onChange={(e) => handleUpdateWatchlistStatus(item.id, e.target.value)}

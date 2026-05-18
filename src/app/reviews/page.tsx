@@ -132,25 +132,27 @@ function ReviewsContent() {
       <NavBar showBack />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-center flex-wrap">
-          <div className="flex gap-2 flex-shrink-0">
-            {["newest", "oldest", "popular"].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSort(s)}
-                className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${sort === s ? "bg-primary text-primary-foreground border-primary" : "border-border/70 bg-card/80 text-foreground hover:border-primary/60"}`}
-              >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3 flex-1 min-w-0">
-            <Input value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Search by username..." className="flex-1" />
-            <Input value={searchMovie} onChange={(e) => setSearchMovie(e.target.value)} placeholder="Search by movie..." className="flex-1" />
-            <Button type="submit">Search</Button>
-          </div>
-        </form>
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 border-b border-border/40">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-center justify-center w-full">
+            <div className="flex gap-2 flex-shrink-0">
+              {["newest", "oldest", "popular"].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSort(s)}
+                  className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${sort === s ? "bg-primary text-primary-foreground border-primary" : "border-border/70 bg-card/80 text-foreground hover:border-primary/60"}`}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 w-full max-w-2xl justify-center items-center">
+              <Input value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Search by username..." className="h-14 text-base" />
+              <Input value={searchMovie} onChange={(e) => setSearchMovie(e.target.value)} placeholder="Search by movie..." className="h-14 text-base" />
+              <Button type="submit" className="h-14 px-7 text-base">Search</Button>
+            </div>
+          </form>
+        </div>
 
         {loading && <p className="text-muted-foreground text-sm">Loading reviews...</p>}
 
@@ -158,13 +160,13 @@ function ReviewsContent() {
           <p className="text-muted-foreground text-sm">No reviews found.</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto items-start">
           {reviews.filter((r) => r.comment && r.comment.trim().length > 0).map((review) => {
             const movie = movieInfos[review.tmdb_movie_id];
             return (
-              <div key={review.id} className="flex gap-3 p-4 rounded-2xl border border-border/60 bg-card/70 min-h-[12rem]">
+              <div key={review.id} className="flex gap-4 p-4 rounded-2xl border border-border/40 bg-card/70 shadow-md hover:shadow-lg hover:border-border/80 transition-all duration-200">
                 <div
-                  className="flex-shrink-0 w-16 sm:w-20 cursor-pointer"
+                  className="flex-shrink-0 w-20 sm:w-28 cursor-pointer"
                   onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}
                 >
                   {movie?.poster_path ? (
@@ -177,45 +179,51 @@ function ReviewsContent() {
                     <div className="w-full aspect-[2/3] bg-muted rounded-lg flex items-center justify-center text-xs text-muted-foreground">?</div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <button type="button" onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)} className="text-sm font-semibold hover:underline line-clamp-1">
-                          {movie?.title || `Movie #${review.tmdb_movie_id}`}
-                        </button>
-                        <button type="button" onClick={() => router.push(`/profile?user=${review.user_id}`)} className="text-base font-semibold text-primary hover:underline block">
-                          {review.user_name}
-                        </button>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <StarRating value={review.rating} onChange={() => {}} readonly />
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button type="button" onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)} className="text-base font-bold text-white hover:underline line-clamp-1">
+                      {movie?.title || `Movie #${review.tmdb_movie_id}`}
+                    </button>
+                    <span className="flex-shrink-0 bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-0.5 rounded-full border border-yellow-500/30">
+                      ⭐ {review.rating}/10
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold flex-shrink-0">
+                      {review.user_name.charAt(0).toUpperCase()}
+                    </div>
+                    <button type="button" onClick={() => router.push(`/profile?user=${review.user_id}`)} className="text-base font-bold text-primary hover:underline">
+                      {review.user_name}
+                    </button>
+                  </div>
+                  {review.comment && (
+                    <div>
+                      <p className={`text-base text-white/80 leading-relaxed break-words ${expandedReviews.has(review.id) ? "" : "line-clamp-4"}`}>
+                        {review.comment}
+                      </p>
+                      {review.comment.length > 120 && (
                         <button
                           type="button"
-                          onClick={() => handleLike(review.id)}
-                          disabled={review.liked_by_me}
-                          className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs font-medium hover:border-primary/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                          onClick={() => toggleExpand(review.id)}
+                          className="text-xs text-primary hover:underline mt-1"
                         >
-                          👍 {review.likes}
+                          {expandedReviews.has(review.id) ? "Ver menos ↑" : "Ver mais ↓"}
                         </button>
-                      </div>
+                      )}
                     </div>
-                    {review.comment && (
-                      <div>
-                        <p className={`text-sm text-white/80 leading-relaxed break-words ${expandedReviews.has(review.id) ? "" : "line-clamp-3"}`}>
-                          {review.comment}
-                        </p>
-                        {review.comment.length > 120 && (
-                          <button
-                            type="button"
-                            onClick={() => toggleExpand(review.id)}
-                            className="text-xs text-primary hover:underline mt-1"
-                          >
-                            {expandedReviews.has(review.id) ? "Ver menos ↑" : "Ver mais ↓"}
-                          </button>
-                        )}
-                      </div>
-                    )}
+                  )}
+                  <div className="flex items-center justify-between mt-auto pt-2">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(review.created_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleLike(review.id)}
+                      disabled={review.liked_by_me}
+                      className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-card/70 px-2.5 py-1.5 text-xs font-medium hover:border-primary/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      👍 {review.likes}
+                    </button>
                   </div>
                 </div>
               </div>

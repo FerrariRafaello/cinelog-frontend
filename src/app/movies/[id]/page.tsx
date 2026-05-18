@@ -262,113 +262,111 @@ export default function MoviePage() {
     <div className="min-h-screen bg-background">
       <NavBar showBack />
 
-      {/* Hero + Movie Header */}
-      <div className={`relative ${movie.poster_path ? "min-h-[64vh] sm:min-h-[72vh] overflow-hidden" : ""}`}>
-        {movie.poster_path && (
-          <>
+      <div className="w-full bg-background">
+        <div className="relative">
+          {movie.poster_path && (
             <div
-              className="absolute inset-0 scale-110"
+              className="absolute inset-0 w-full h-full z-0 pointer-events-none"
+              aria-hidden="true"
               style={{
                 backgroundImage: `url(https://image.tmdb.org/t/p/w780${movie.poster_path})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                filter: "blur(24px) brightness(0.35)",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: 'blur(24px) brightness(0.35)',
+                opacity: 0.7,
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-          </>
-        )}
-
-        <div className={`relative z-10 max-w-6xl mx-auto px-4 sm:px-8 ${movie.poster_path ? "pt-8 sm:pt-10 pb-16 sm:pb-20" : "py-8 sm:py-10"}`}>
-          <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-xl p-4 sm:p-6">
-            <div className="flex flex-col md:flex-row gap-5 sm:gap-7 items-start">
-              {movie.poster_path && (
-                <div className="w-40 sm:w-56 md:w-64 lg:w-72 aspect-[2/3] mx-auto md:mx-0 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-border/40 shadow-lg">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                    alt={movie.title}
-                    className="w-full h-full object-contain object-center bg-black"
-                  />
-                </div>
+          )}
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-8 pt-8 sm:pt-10 pb-6 sm:pb-10">
+            <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-xl p-4 sm:p-6 flex flex-col md:flex-row gap-7 items-start">
+            {/* Poster centralizado apenas na vertical, não todo o conteúdo */}
+            {movie.poster_path && (
+              <div className="w-40 sm:w-56 md:w-64 lg:w-72 aspect-[2/3] mx-auto md:mx-0 rounded-xl overflow-hidden flex-shrink-0 ring-1 ring-border/40 shadow-lg bg-black">
+                <img
+                  src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
+                  alt={movie.title}
+                  className="w-full h-full object-contain object-center"
+                />
+              </div>
+            )}
+            <div className="space-y-2 flex-1">
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">{movie.title}</h2>
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">{movie.overview}</p>
+              <p className="text-base sm:text-lg font-semibold">⭐ {movie.vote_average.toFixed(1)} · {movie.release_date?.slice(0, 4)}</p>
+              {movie.genres && movie.genres.length > 0 && (
+                <p className="text-base sm:text-lg text-muted-foreground">
+                  {movie.genres.map((g) => g.name).join(" · ")}
+                </p>
               )}
-              <div className="space-y-2 flex-1">
-                <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-tight">{movie.title}</h2>
-                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">{movie.overview}</p>
-                <p className="text-base sm:text-lg font-semibold">⭐ {movie.vote_average.toFixed(1)} · {movie.release_date?.slice(0, 4)}</p>
-                {movie.genres && movie.genres.length > 0 && (
-                  <p className="text-base sm:text-lg text-muted-foreground">
-                    {movie.genres.map((g) => g.name).join(" · ")}
-                  </p>
+              {movie.runtime && (
+                <p className="text-base sm:text-lg text-muted-foreground">
+                  {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}min
+                </p>
+              )}
+              {credits.crew && (
+                <p className="text-base sm:text-lg">
+                  🎬 <span className="font-medium">Director:</span>{" "}
+                  {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                {trailer && (
+                  <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
+                    ▶ Watch Trailer
+                  </a>
                 )}
-                {movie.runtime && (
-                  <p className="text-base sm:text-lg text-muted-foreground">
-                    {Math.floor(movie.runtime / 60)}h {movie.runtime % 60}min
-                  </p>
-                )}
-                {credits.crew && (
-                  <p className="text-base sm:text-lg">
-                    🎬 <span className="font-medium">Director:</span>{" "}
-                    {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-3">
-                  {trailer && (
-                    <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
-                      ▶ Watch Trailer
-                    </a>
-                  )}
-                  {imdbPlayUrl && (
-                    <a
-                      href={imdbPlayUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors"
-                    >
-                      ▶ Assistir filme
-                    </a>
-                  )}
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base sm:min-w-52"
+                {imdbPlayUrl && (
+                  <a
+                    href={imdbPlayUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors"
                   >
-                    <option value="want_to_watch">Want to watch</option>
-                    <option value="watching">Watching</option>
-                    <option value="watched">Watched</option>
-                    <option value="dropped">Dropped</option>
-                  </select>
-                  <div className="flex items-center gap-2">
+                    ▶ Assistir filme
+                  </a>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base sm:min-w-52"
+                >
+                  <option value="want_to_watch">Want to watch</option>
+                  <option value="watching">Watching</option>
+                  <option value="watched">Watched</option>
+                  <option value="dropped">Dropped</option>
+                </select>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handleWatchlist}
+                    variant="outline"
+                    disabled={inWatchlist}
+                    className="h-11 text-sm sm:text-base"
+                  >
+                    {inWatchlist ? "Already in watchlist" : "Add to Watchlist"}
+                  </Button>
+                  {inWatchlist && (
                     <Button
-                      onClick={handleWatchlist}
-                      variant="outline"
-                      disabled={inWatchlist}
-                      className="h-11 text-sm sm:text-base"
+                      type="button"
+                      variant="ghost"
+                      onClick={handleRemoveFromWatchlist}
+                      className="h-11 w-11 rounded-lg border border-border/70 text-destructive hover:bg-destructive/10"
+                      aria-label="Remove from watchlist"
+                      title="Remove from watchlist"
                     >
-                      {inWatchlist ? "Already in watchlist" : "Add to Watchlist"}
+                      X
                     </Button>
-                    {inWatchlist && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={handleRemoveFromWatchlist}
-                        className="h-11 w-11 rounded-lg border border-border/70 text-destructive hover:bg-destructive/10"
-                        aria-label="Remove from watchlist"
-                        title="Remove from watchlist"
-                      >
-                        X
-                      </Button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
-          </section>
+            </section>
+          </div>
         </div>
       </div>
 
-      <main className="relative z-20 -mt-8 sm:-mt-70 max-w-6xl mx-auto px-4 sm:px-8 pb-10 sm:pb-12 space-y-8 sm:space-y-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 pb-10 sm:pb-12 space-y-8 sm:space-y-10">
 
         {credits.cast.length > 0 && (
           <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
