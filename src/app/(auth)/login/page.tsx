@@ -35,7 +35,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/92 backdrop-blur-md shadow-2xl">
           <div className="text-center space-y-1">
             <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Welcome back</p>
-            <h1 className="text-4xl font-bold tracking-tight">Cinelog</h1>
+            <h1 className="text-4xl font-bold tracking-tight">CritCine</h1>
             <p className="text-muted-foreground mt-1 text-base">Sign in to continue</p>
           </div>
 
