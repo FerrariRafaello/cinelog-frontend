@@ -15,8 +15,8 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
+    // flex layout: left and right are flex-1, center is flex-shrink-0 so the logo never gets squished
     <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4">
-      {/* Esquerda — flex-1 so it never pushes center */}
       <div className="flex-1 min-w-0">
         {showBack ? (
           <button
@@ -39,7 +39,6 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
         )}
       </div>
 
-      {/* Centro — flex-shrink-0 garante que nunca é sobreposto */}
       <div className="flex-shrink-0">
         <h1
           className="text-xl sm:text-2xl font-bold tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
@@ -49,9 +48,8 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
         </h1>
       </div>
 
-      {/* Direita — flex-1 alinhado à direita */}
       <div className="flex-1 flex justify-end items-center gap-2">
-        {/* Desktop — só aparece em xl+ */}
+        {/* Desktop nav — hidden below xl where the hamburger takes over */}
         <div className="hidden xl:flex items-center gap-1.5">
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => {
             if (window.location.pathname === "/") {

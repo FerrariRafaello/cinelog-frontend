@@ -1,9 +1,8 @@
 "use client";
 
-// Persists across SPA navigation (not reset by unmount), reset only on full page refresh
+// Module-level: survives SPA navigation (not reset on unmount), only cleared on full page refresh
 let homeScrollY = 0;
 
-//IMPORTS
 import Cookies from "js-cookie";
 import { useState, useRef, Suspense, memo } from "react";
 import { useRouter } from "next/navigation";
@@ -16,12 +15,11 @@ import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
-// Componente memoizado das filas de filmes
+// Memoized so unrelated state changes on the home page don't re-render every row
 const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, nowPlayingIds }: { title: string; movieList: Movie[]; scrollRef: React.RefObject<HTMLDivElement | null>; router: ReturnType<typeof useRouter>; nowPlayingIds?: Set<number> }) {
   if (movieList.length === 0) return null;
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [hasScrolledRight, setHasScrolledRight] = useState(false);
   const hasScrolledRef = useRef(false);
 
   useEffect(() => {
@@ -125,12 +123,10 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
 
 function HomeContent() {
   const router = useRouter();
-  // Top 10 scroll states
   const [providers, setProviders] = useState<any[]>([]);
   const top10Ref = useRef<HTMLDivElement>(null);
   const [top10CanScrollLeft, setTop10CanScrollLeft] = useState(false);
   const [top10CanScrollRight, setTop10CanScrollRight] = useState(false);
-  const top10HasScrolledRef = useRef(false);
   const [top10, setTop10] = useState<Movie[]>([]);
   useEffect(() => {
     if (top10.length === 0) return;
@@ -181,7 +177,6 @@ function HomeContent() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [trending, setTrending] = useState<Movie[]>([]);
   const [nowPlaying, setNowPlaying] = useState<Movie[]>([]);
-  // ...existing code...
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [animation, setAnimation] = useState<Movie[]>([]);
   const [forYou, setForYou] = useState<Movie[]>([]);
@@ -209,7 +204,6 @@ function HomeContent() {
   const topRatedRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<HTMLDivElement>(null);
   const classicsRef = useRef<HTMLDivElement>(null);
-  const heroCastRef = useRef<HTMLDivElement>(null);
 
   const initRef = useRef(false);
   const featuredLengthRef = useRef(0);
@@ -371,6 +365,7 @@ function HomeContent() {
       } catch { setProviders([]); }
     }
 
+    // Fetch all sections in parallel — allSettled so one failure doesn't block the rest
     Promise.allSettled([
       fetchTrending(),
       fetchNowPlaying(),
@@ -407,13 +402,6 @@ function HomeContent() {
     setMovies([]);
   }, [searchParams]);
 
-  function handleGoHome() {
-    setQuery("");
-    setMovies([]);
-    setShowGenreResults(false);
-    router.replace("/");
-  }
-
   async function fetchMoviesByGenre(genreName: string, updateUrl = true) {
     const normalized = genreName.trim();
     if (!normalized) return;
@@ -423,6 +411,7 @@ function HomeContent() {
 
     const cacheKey = `genre-search:${normalized.toLowerCase()}`;
 
+    // Return cached results on back-navigation to avoid redundant API calls
     if (!updateUrl && typeof window !== "undefined") {
       const cached = sessionStorage.getItem(cacheKey);
       if (cached) {
@@ -432,7 +421,7 @@ function HomeContent() {
           setQuery("");
           return;
         } catch {
-          // Ignore broken cache.
+          // broken cache entry — just refetch
         }
       }
     }
@@ -496,6 +485,7 @@ function HomeContent() {
     }
   }
 
+  // Pick up to 6 now-playing movies with poster + overview for the hero carousel
   useEffect(() => {
     if (nowPlaying.length === 0) return;
     const shuffled = [...nowPlaying]
@@ -506,11 +496,12 @@ function HomeContent() {
     setFeaturedIndex(0);
   }, [nowPlaying]);
 
+  // Auto-advance the hero carousel every 6 s; pause while the user hovers
   useEffect(() => {
     featuredLengthRef.current = featured.length;
     if (featured.length < 2) return;
     if (featuredPaused) return;
-    
+
     const timer = setInterval(() => {
       setFeaturedIndex((prev) => (prev + 1) % featuredLengthRef.current);
     }, 6000);

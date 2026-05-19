@@ -1,23 +1,21 @@
 "use client";
 
-//IMPORTS
-import {useState} from "react";
-import {useRouter} from "next/navigation";
-import {login} from "@/lib/auth";
-import {Button} from "@/components/ui/button"
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { login } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-    const router=useRouter();
-    const [email, setEmail]=useState("");
-    const [password, setPassword]=useState("");
-    const [error, setError]=useState("");
-    const [loading, setLoading]=useState(false);
+    const router = useRouter();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
 
     async function handleSubmit(e: React.SyntheticEvent) {
         e.preventDefault();
         setLoading(true);
-        setError("");
+        setError(""); // clear previous error before each attempt
 
         try {
             await login(email, password);

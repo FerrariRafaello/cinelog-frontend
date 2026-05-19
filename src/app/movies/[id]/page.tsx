@@ -1,12 +1,11 @@
 "use client";
 
-//IMPORTS
 import Cookies from "js-cookie";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api"
+import { api } from "@/lib/api";
 import { Movie, Review, WatchlistItem } from "@/types";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { StarRating } from "@/components/StarRating";
 import { NavBar } from "@/components/NavBar";
@@ -38,6 +37,7 @@ export default function MoviePage() {
 
 
     useEffect(() => {
+    // Small delay lets the router settle before firing API calls on navigation
     const timer = setTimeout(() => {
       const token = Cookies.get("token");
       if (!token) {
@@ -126,6 +126,7 @@ export default function MoviePage() {
       try{
         const resp=await api.get(`/v1/tmdb/movies/${id}/providers`);
         const br=resp.data.results?.BR;
+        // Prefer streaming (flatrate), fall back to rent, then buy
         const list=br?.flatrate || br?.rent || br?.buy || [];
         setProviders(list);
       }catch{
@@ -224,6 +225,7 @@ export default function MoviePage() {
       }
     }
 
+    // Credits and videos are fetched independently — one failing won't block the other
     async function fetchCredits() {
       try{
         const resp=await api.get(`/v1/tmdb/movies/${id}/credits`);

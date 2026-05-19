@@ -1,3 +1,5 @@
+// Shared TypeScript interfaces used across pages and components
+
 export interface User{
     id:number;
     name:string;

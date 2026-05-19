@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/auth";
-import { Button } from "@/components/ui/button"
-
+import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -21,6 +20,7 @@ export default function RegisterPage() {
     const [showTerms, setShowTerms] = useState(false);
     const [termsAccepted, setTermsAccepted] = useState(false);
 
+    // Weak: < 8 chars or no letters | Medium: 8+ chars with digits | Strong: 10+ with uppercase and special char
     function getPasswordStrength(pwd: string): { label: string; color: string } {
       if (pwd.length === 0) return { label: "", color: "" };
       if (pwd.length < 8 || !/[a-zA-Z]/.test(pwd))
@@ -46,6 +46,7 @@ export default function RegisterPage() {
         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
     }
 
+    // Standard Brazilian CPF check-digit validation
     function validateCPF(cpf: string): boolean {
       cpf = cpf.replace(/\D/g, "");
       if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
@@ -71,6 +72,7 @@ export default function RegisterPage() {
 
     async function handleSubmit(e: React.SyntheticEvent) {
         e.preventDefault();
+        // Show the terms modal first if the user hasn't accepted yet
         if (!termsAccepted) {
           setShowTerms(true);
           setLoading(false);
@@ -230,9 +232,9 @@ export default function RegisterPage() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          {/* <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
             {loading ? "Creating account..." : "Sign up"}
-          </Button> */}
+          </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">

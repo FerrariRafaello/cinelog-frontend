@@ -50,7 +50,7 @@ function ReviewsContent() {
   const isFiltering = searchUser.trim() !== "" || searchMovie.trim() !== "";
   const showTrending = !isFiltering && feedMode === "global";
 
-  // Top reviewers derived from trending — aggregated by total likes
+  // Aggregate total likes per user from the trending feed to build the leaderboard
   const topReviewers = (() => {
     const map = new Map<number, { userId: number; name: string; totalLikes: number }>();
     for (const r of trending) {
@@ -159,6 +159,7 @@ function ReviewsContent() {
     setMovieInfos((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
   }
 
+  // Optimistic like/unlike — updates UI immediately, rolls back on API failure
   async function handleLike(reviewId: number) {
     const current = [...reviews, ...trending].find((r) => r.id === reviewId);
     if (!current) return;
@@ -204,6 +205,7 @@ function ReviewsContent() {
     </div>
   );
 
+  // Spotlight = most-liked review that has a comment (sorted on the client — API order isn't guaranteed)
   const spotlightReview = [...trending]
     .filter((r) => r.comment && r.comment.trim().length > 0)
     .sort((a, b) => b.likes - a.likes)[0];
@@ -473,7 +475,7 @@ function ReviewsContent() {
           </div>
         )}
 
-        {/* Following mode — agrupado por usuário */}
+        {/* Following feed — reviews grouped by user, preserving feed order */}
         {!loading && feedMode === "following" && (() => {
           const grouped: { userId: number; userName: string; userReviews: ReviewFull[] }[] = [];
           const seen = new Map<number, number>();
