@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 const API_URL =
-    process.env.NEXT_PUBLIC_API_URL?.trim() || "https://cinelog-production-95d5.up.railway.app";
+    process.env.NEXT_PUBLIC_API_URL?.trim() || "https://critcine-production-95d5.up.railway.app";
 
 export const api = axios.create({
     baseURL: API_URL,

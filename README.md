@@ -39,8 +39,8 @@ CritCine is a full-stack movie review and discovery platform built as a portfoli
 ### Installation
 
 ```bash
-git clone https://github.com/FerrariRafaello/cinelog-frontend.git
-cd cinelog-frontend
+git clone https://github.com/FerrariRafaello/critcine-frontend.git
+cd critcine-frontend
 npm install
 ```
 
@@ -49,7 +49,7 @@ npm install
 Create a `.env.local` file at the project root (optional — falls back to production API):
 
 ```env
-NEXT_PUBLIC_API_URL=https://cinelog-production-95d5.up.railway.app
+NEXT_PUBLIC_API_URL=https://critcine-production-95d5.up.railway.app
 ```
 
 ### Running Locally
