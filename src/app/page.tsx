@@ -206,8 +206,10 @@ function HomeContent() {
   const animationRef = useRef<HTMLDivElement>(null);
   const classicsRef = useRef<HTMLDivElement>(null);
   const heroCastRef = useRef<HTMLDivElement>(null);
+
   const initRef = useRef(false);
   const featuredLengthRef = useRef(0);
+  const scrollRestoredRef = useRef(false);
 
   const featuredMovie = featured[featuredIndex] || null;
 
@@ -255,24 +257,12 @@ function HomeContent() {
     return `${text.slice(0, maxLength).trimEnd()}...`;
   }
 
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const previousScrollRestoration = window.history.scrollRestoration;
-    window.history.scrollRestoration = "manual";
-
-    const forceTop = () => {
-      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    };
-
-    forceTop();
-    const rafId = window.requestAnimationFrame(forceTop);
-
-    return () => {
-      window.cancelAnimationFrame(rafId);
-      window.history.scrollRestoration = previousScrollRestoration;
-    };
-  }, []);
+    if (initialLoading) return;
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [initialLoading]);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -290,96 +280,64 @@ function HomeContent() {
       try {
         const resp = await api.get("/v1/tmdb/trending");
         setTrending(resp.data.results.slice(0, 40));
-      } catch {
-        setTrending([]);
-      }
+      } catch { setTrending([]); }
     }
-
     async function fetchNowPlaying() {
       try {
         const resp = await api.get("/v1/tmdb/now-playing");
         setNowPlaying(resp.data.results.slice(0, 40));
-      } catch {
-        setNowPlaying([]);
-      }
+      } catch { setNowPlaying([]); }
     }
-
     async function fetchTop10() {
       try {
         const resp = await api.get("/v1/tmdb/top10-today");
         setTop10(resp.data.results.slice(0, 10));
-      } catch {
-        setTop10([]);
-      }
+      } catch { setTop10([]); }
     }
-
     async function fetchTopRated() {
       try {
         const resp = await api.get("/v1/tmdb/top-rated");
         setTopRated(resp.data.results.slice(0, 40));
-      } catch {
-        setTopRated([]);
-      }
+      } catch { setTopRated([]); }
     }
-
     async function fetchAnimation() {
       try {
         const resp = await api.get("/v1/tmdb/animation");
         setAnimation(resp.data.results.slice(0, 40));
-      } catch {
-        setAnimation([]);
-      }
+      } catch { setAnimation([]); }
     }
-
     async function fetchForYou() {
       try {
         const meResp = await api.get("/v1/users/me");
         const favoriteGenres: string = meResp.data.favorite_genres || "";
-
         let genreIds = "";
         if (favoriteGenres.trim()) {
-          // favoriteGenres pode ser "Action,Drama" ou IDs separados por vírgula
-          genreIds = favoriteGenres
-            .split(",")
-            .map((g: string) => {
-              const trimmed = g.trim();
-              return GENRE_TO_ID[trimmed] ?? trimmed;
-            })
-            .filter(Boolean)
-            .join(",");
+          genreIds = favoriteGenres.split(",").map((g: string) => {
+            const trimmed = g.trim();
+            return GENRE_TO_ID[trimmed] ?? trimmed;
+          }).filter(Boolean).join(",");
         }
-
         if (!genreIds) {
-          // fallback: Action + Drama + Thriller
           genreIds = "28,18,53";
           setForYouTitle("Popular Right Now");
         } else {
           setForYouTitle("For You");
         }
-
         const resp = await api.get("/v1/tmdb/for-you", { params: { genres: genreIds } });
         setForYou(resp.data.results.slice(0, 40));
-      } catch {
-        setForYou([]);
-      }
+      } catch { setForYou([]); }
     }
-
     async function fetchClassics() {
       try {
         const resp = await api.get("/v1/tmdb/classics");
         setClassics(resp.data.results.slice(0, 40));
-      } catch {
-        setClassics([]);
-      }
+      } catch { setClassics([]); }
     }
-
     async function fetchProviders() {
       try {
         const resp = await api.get("/v1/tmdb/providers");
         setProviders(resp.data);
-      } catch {
-        setProviders([]);
-      }
+      } catch { setProviders([]); }
     }
 
     Promise.allSettled([
@@ -666,7 +624,10 @@ function HomeContent() {
                 <div
                   key={movie.id}
                   className="group relative origin-bottom cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:-translate-y-1 hover:scale-[1.02] hover:z-10 hover:ring-primary/50 transition-all duration-200"
-                  onClick={() => router.push(`/movies/${movie.id}`)}
+                  onClick={() => {
+                    sessionStorage.setItem("home-scroll", String(window.scrollY));
+                    router.push(`/movies/${movie.id}`);
+                  }}
                 >
                   {movie.poster_path ? (
                     <img
@@ -692,14 +653,14 @@ function HomeContent() {
         {movies.length === 0 && (
           <>
             {featuredMovie && (
-              <section className="relative -mt-4 sm:-mt-8 lg:-mt-12">
+              <section className="relative -mt-2 xs:-mt-4 sm:-mt-8 lg:-mt-12">
                 <div className="pointer-events-none absolute top-0 left-0 right-0 h-16 z-10 bg-gradient-to-b from-background to-transparent" />
 
-                <div className="relative overflow-hidden rounded-2xl border border-border/60 group/featured" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
+                <div className="relative overflow-hidden rounded-xl xs:rounded-2xl border border-border/60 group/featured" onMouseEnter={() => setFeaturedPaused(true)} onMouseLeave={() => setFeaturedPaused(false)}>
                   <div
                     className="absolute inset-0"
                     style={{
-                      backgroundImage: `url(https://image.tmdb.org/t/p/w780${featuredMovie.poster_path})`,
+                      backgroundImage: `url(https://image.tmdb.org/t/p/w500${featuredMovie.poster_path})`,
                       backgroundSize: "cover",
                       backgroundPosition: "center",
                       filter: "blur(8px) brightness(0.58)",
@@ -729,9 +690,9 @@ function HomeContent() {
                     </>
                   )}
 
-                  <div className="relative z-10 w-full px-2 py-4 sm:px-6 sm:py-8 md:px-10 md:py-10 lg:px-14 lg:py-12 pb-8 sm:pb-16 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-4 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left xl:gap-16 lg:text-left lg:py-12">
+                  <div className="relative z-10 w-full px-1.5 py-3 xs:px-2 xs:py-4 sm:px-6 sm:py-8 md:px-10 md:py-10 lg:px-14 lg:py-12 pb-6 xs:pb-8 sm:pb-16 flex flex-col lg:flex-row items-center lg:items-center justify-center gap-2 xs:gap-4 sm:gap-8 lg:gap-14 xl:gap-16 text-center lg:text-left xl:gap-16 lg:text-left lg:py-12">
                     {/* Poster fixo, mas muda junto com o filme em destaque */}
-                    <div className="w-32 xs:w-40 sm:w-56 md:w-64 lg:w-80 xl:w-[22rem] 2xl:w-[26rem] aspect-[2/3] flex-shrink-0 overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/15 bg-black/20 mx-auto lg:mx-0 carousel-poster">
+                    <div className="w-24 xs:w-32 sm:w-56 md:w-64 lg:w-80 xl:w-[22rem] 2xl:w-[26rem] aspect-[2/3] flex-shrink-0 overflow-hidden rounded-xl xs:rounded-2xl shadow-2xl ring-1 ring-white/15 bg-black/20 mx-auto lg:mx-0 carousel-poster">
                       {featuredMovie && (
                         <img
                           src={`https://image.tmdb.org/t/p/w342${featuredMovie.poster_path}`}
@@ -741,13 +702,13 @@ function HomeContent() {
                       )}
                     </div>
 
-                    <div className="w-full max-w-2xl sm:max-w-3xl md:max-w-4xl flex flex-col items-center lg:items-start justify-center">
+                    <div className="w-full max-w-xs xs:max-w-sm sm:max-w-2xl md:max-w-3xl md:max-w-4xl flex flex-col items-center lg:items-start justify-center">
                       <p className="text-xs sm:text-sm uppercase tracking-[0.24em] text-primary/90">Em cartaz</p>
                       <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight text-white text-balance">{featuredMovie.title}</h2>
                       <p className="mt-3 text-base sm:text-lg lg:text-xl text-white/85 leading-relaxed max-w-xl xl:max-w-2xl text-pretty">{truncateText(featuredMovie.overview, 140)}</p>
 
                       <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
-                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4">
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 xs:gap-3 sm:gap-4">
                           {featuredTrailer && (
                             <a
                               href={`https://www.youtube.com/watch?v=${featuredTrailer}`}
@@ -768,7 +729,7 @@ function HomeContent() {
                         </div>
 
                         {featuredCredits.length > 0 && (
-                          <div className="mt-5 flex flex-wrap gap-6 justify-center lg:justify-start">
+                          <div className="mt-5 flex flex-wrap gap-3 xs:gap-4 sm:gap-6 justify-center lg:justify-start">
                             {featuredCredits.slice(0, 4).map((actor) => (
                               <a
                                 key={actor.id}
@@ -799,7 +760,7 @@ function HomeContent() {
                   </div>
                     {/* dots dentro do carrossel */}
                     {featured.length > 1 && (
-                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-2">
+                      <div className="absolute bottom-2 xs:bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center justify-center gap-1.5 xs:gap-2">
                         {featured.map((item, idx) => (
                           <button
                             key={item.id}
@@ -813,7 +774,7 @@ function HomeContent() {
                     )}
                   </div>
 
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-25 bg-gradient-to-t from-background to-transparent rounded-b-2xl" />
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 xs:h-25 bg-gradient-to-t from-background to-transparent rounded-b-xl xs:rounded-b-2xl" />
               </section>
             )}
 
@@ -881,7 +842,10 @@ function HomeContent() {
                             </span>
                             <div
                               className="relative z-10 w-56 sm:w-64 lg:w-72 flex-shrink-0 rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 transition-all duration-200 cursor-pointer pointer-events-auto"
-                              onClick={() => router.push(`/movies/${movie.id}`)}
+                              onClick={() => {
+                                sessionStorage.setItem("home-scroll", String(window.scrollY));
+                                router.push(`/movies/${movie.id}`);
+                              }}
                             >
                               {movie.poster_path ? (
                                 <img

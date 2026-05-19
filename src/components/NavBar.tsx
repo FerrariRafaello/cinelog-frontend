@@ -53,7 +53,13 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
       <div className="flex justify-end items-center gap-2">
         {/* Desktop — só aparece em lg+ */}
         <div className="hidden lg:flex items-center gap-2">
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/")}>Home</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => {
+            if (window.location.pathname === "/") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              router.push("/");
+            }
+          }}>Home</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Profile</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
           {showLogout && <LogoutDialog />}
@@ -71,7 +77,14 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-11 z-50 flex flex-col gap-1 rounded-xl border border-border bg-card shadow-xl p-2 min-w-36">
-              <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/"); setMenuOpen(false); }}>Home</button>
+              <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => {
+                setMenuOpen(false);
+                if (window.location.pathname === "/") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  router.push("/");
+                }
+              }}>Home</button>
               <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Profile</button>
               <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews"); setMenuOpen(false); }}>Reviews</button>
               {showLogout && (

@@ -131,7 +131,7 @@ function ReviewsContent() {
     <div className="min-h-screen bg-background">
       <NavBar showBack />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-6">
+      <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
         <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 border-b border-border/40">
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-center justify-center w-full">
             <div className="flex gap-2 flex-shrink-0">
@@ -160,11 +160,14 @@ function ReviewsContent() {
           <p className="text-muted-foreground text-sm">No reviews found.</p>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto items-start">
+        <div className="max-w-5xl mx-auto [column-count:1] md:[column-count:2] [column-gap:1rem]">
           {reviews.filter((r) => r.comment && r.comment.trim().length > 0).map((review) => {
             const movie = movieInfos[review.tmdb_movie_id];
             return (
-              <div key={review.id} className="flex gap-4 p-4 rounded-2xl border border-border/40 bg-card/70 shadow-md hover:shadow-lg hover:border-border/80 transition-all duration-200">
+              <div
+                key={review.id}
+                className="flex gap-4 p-4 mb-4 rounded-2xl border border-border/40 bg-card/70 shadow-md hover:shadow-lg hover:border-border/80 transition-all duration-200 [break-inside:avoid]"
+              >
                 <div
                   className="flex-shrink-0 w-20 sm:w-28 cursor-pointer"
                   onClick={() => router.push(`/movies/${review.tmdb_movie_id}`)}

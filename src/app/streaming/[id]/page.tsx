@@ -16,6 +16,7 @@ const GENRE_TO_ID: Record<string, number> = {
   Fantasy: 14, Horror: 27, Mystery: 9648, Romance: 10749,
   "Sci-Fi": 878, Thriller: 53, War: 10752,
 };
+  const [genre, setGenre] = useState<string>("");
 
 export default function StreamingPage() {
   const { id } = useParams();
@@ -75,12 +76,34 @@ export default function StreamingPage() {
   }
 
   const filtered = movies
-    .filter((m) => !search || m.title.toLowerCase().includes(search.toLowerCase()));
+    .filter((m) =>
+      (!search || m.title.toLowerCase().includes(search.toLowerCase())) &&
+      (!genre || (m.genre_ids && m.genre_ids.includes(GENRE_TO_ID[genre])))
+    );
   useEffect(() => {
     setMovies((prev) => [...prev].sort((a, b) =>
       sort === "desc" ? b.vote_average - a.vote_average : a.vote_average - b.vote_average
     ));
   }, [sort]);
+
+  // Reset page to 1 and reload movies when genre changes
+  useEffect(() => {
+    if (!genre) return;
+    setLoading(true);
+    async function fetchByGenre() {
+      try {
+        const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params: { page: 1, with_genres: GENRE_TO_ID[genre] } });
+        setMovies(resp.data.results || []);
+        setTotalPages(resp.data.total_pages || 1);
+        setPage(1);
+      } catch {
+        setMovies([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchByGenre();
+  }, [genre, id]);
 
   if (loading) return (
     <div className="min-h-screen bg-background">
@@ -114,6 +137,16 @@ export default function StreamingPage() {
             placeholder="Buscar por título..."
             className="h-11 sm:w-72"
           />
+          <select
+            value={genre}
+            onChange={(e) => setGenre(e.target.value)}
+            className="h-11 rounded-lg border border-border bg-background px-3 text-sm sm:w-48"
+          >
+            <option value="">All Genres</option>
+            {Object.keys(GENRE_TO_ID).map((g) => (
+              <option key={g} value={g}>{g}</option>
+            ))}
+          </select>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as "desc" | "asc")}
