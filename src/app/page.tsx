@@ -1,5 +1,8 @@
 "use client";
 
+// Persists across SPA navigation (not reset by unmount), reset only on full page refresh
+let homeScrollY = 0;
+
 //IMPORTS
 import Cookies from "js-cookie";
 import { useState, useRef, Suspense, memo } from "react";
@@ -94,6 +97,7 @@ const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, n
                       src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
                       alt={movie.title}
                       className="w-full aspect-[2/3] object-cover"
+                      loading="lazy"
                     />
                     {nowPlayingIds?.has(movie.id) && (
                       <div className="absolute top-0 left-0 z-10 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-1">
@@ -259,10 +263,37 @@ function HomeContent() {
 
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    history.scrollRestoration = 'manual';
+  }, []);
+
+  useEffect(() => {
     if (initialLoading) return;
-    window.scrollTo({ top: 0, behavior: "instant" });
+    scrollRestoredRef.current = false;
+    // homeScrollY has the exact position from the last SPA visit (Back nav);
+    // sessionStorage is the fallback for full-page refresh
+    const pos = homeScrollY > 100
+      ? homeScrollY
+      : parseInt(sessionStorage.getItem('home-scroll-pos') || '0');
+    if (pos > 100) {
+      setTimeout(() => {
+        window.scrollTo({ top: pos, behavior: 'instant' });
+        scrollRestoredRef.current = true;
+      }, 300);
+    } else {
+      scrollRestoredRef.current = true;
+    }
   }, [initialLoading]);
+
+  useEffect(() => {
+    function onScroll() {
+      homeScrollY = window.scrollY; // always updated — survives unmount for Back nav
+      if (scrollRestoredRef.current) {
+        sessionStorage.setItem('home-scroll-pos', String(homeScrollY));
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -624,10 +655,7 @@ function HomeContent() {
                 <div
                   key={movie.id}
                   className="group relative origin-bottom cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:-translate-y-1 hover:scale-[1.02] hover:z-10 hover:ring-primary/50 transition-all duration-200"
-                  onClick={() => {
-                    sessionStorage.setItem("home-scroll", String(window.scrollY));
-                    router.push(`/movies/${movie.id}`);
-                  }}
+                  onClick={() => router.push(`/movies/${movie.id}`)}
                 >
                   {movie.poster_path ? (
                     <img
@@ -842,16 +870,14 @@ function HomeContent() {
                             </span>
                             <div
                               className="relative z-10 w-56 sm:w-64 lg:w-72 flex-shrink-0 rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 transition-all duration-200 cursor-pointer pointer-events-auto"
-                              onClick={() => {
-                                sessionStorage.setItem("home-scroll", String(window.scrollY));
-                                router.push(`/movies/${movie.id}`);
-                              }}
+                              onClick={() => router.push(`/movies/${movie.id}`)}
                             >
                               {movie.poster_path ? (
                                 <img
                                   src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
                                   alt={movie.title}
                                   className="w-full aspect-[2/3] object-cover"
+                                  loading="lazy"
                                 />
                               ) : (
                                 <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">No image</div>

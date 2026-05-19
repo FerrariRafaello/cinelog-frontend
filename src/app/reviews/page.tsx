@@ -38,6 +38,7 @@ function ReviewsContent() {
   const [sort, setSort] = useState("newest");
   const [checked, setChecked] = useState(false);
   const [expandedReviews, setExpandedReviews] = useState<Set<number>>(new Set());
+  const [limit, setLimit] = useState(20);
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -58,12 +59,12 @@ function ReviewsContent() {
   useEffect(() => {
     if (!checked) return;
     fetchReviews();
-  }, [checked, sort, searchUser]);
+  }, [checked, sort, searchUser, limit]);
 
   async function fetchReviews() {
     setLoading(true);
     try {
-      const params: any = { sort, limit: 50 };
+      const params: any = { sort, limit };
       if (searchUser.trim()) params.search_user = searchUser.trim();
 
       if (searchMovie.trim()) {
@@ -233,6 +234,14 @@ function ReviewsContent() {
             );
           })}
         </div>
+
+        {reviews.length === limit && (
+          <div className="flex justify-center pt-4 pb-8">
+            <Button variant="outline" onClick={() => setLimit((prev) => prev + 20)} className="px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+              Carregar mais
+            </Button>
+          </div>
+        )}
       </main>
     </div>
   );

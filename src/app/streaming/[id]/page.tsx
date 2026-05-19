@@ -16,7 +16,7 @@ const GENRE_TO_ID: Record<string, number> = {
   Fantasy: 14, Horror: 27, Mystery: 9648, Romance: 10749,
   "Sci-Fi": 878, Thriller: 53, War: 10752,
 };
-  const [genre, setGenre] = useState<string>("");
+
 
 export default function StreamingPage() {
   const { id } = useParams();
@@ -32,6 +32,7 @@ export default function StreamingPage() {
   const [providerLogo, setProviderLogo] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"desc" | "asc">("desc");
+  const [genre, setGenre] = useState("");
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -67,8 +68,7 @@ export default function StreamingPage() {
     try {
       const next = page + 1;
       const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params: { page: next } });
-      const newMovies = resp.data.results || [];
-      setMovies((prev) => [...prev, ...newMovies]);
+      setMovies((prev) => [...prev, ...(resp.data.results || [])]);
       setPage(next);
     } catch {} finally {
       setLoadingMore(false);
@@ -76,34 +76,9 @@ export default function StreamingPage() {
   }
 
   const filtered = movies
-    .filter((m) =>
-      (!search || m.title.toLowerCase().includes(search.toLowerCase())) &&
-      (!genre || (m.genre_ids && m.genre_ids.includes(GENRE_TO_ID[genre])))
-    );
-  useEffect(() => {
-    setMovies((prev) => [...prev].sort((a, b) =>
-      sort === "desc" ? b.vote_average - a.vote_average : a.vote_average - b.vote_average
-    ));
-  }, [sort]);
-
-  // Reset page to 1 and reload movies when genre changes
-  useEffect(() => {
-    if (!genre) return;
-    setLoading(true);
-    async function fetchByGenre() {
-      try {
-        const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params: { page: 1, with_genres: GENRE_TO_ID[genre] } });
-        setMovies(resp.data.results || []);
-        setTotalPages(resp.data.total_pages || 1);
-        setPage(1);
-      } catch {
-        setMovies([]);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchByGenre();
-  }, [genre, id]);
+    .filter((m) => !search || m.title.toLowerCase().includes(search.toLowerCase()))
+    .filter((m) => !genre || m.genres?.some((g) => g.id === GENRE_TO_ID[genre]))
+    .sort((a, b) => sort === "desc" ? b.vote_average - a.vote_average : a.vote_average - b.vote_average);
 
   if (loading) return (
     <div className="min-h-screen bg-background">
@@ -187,9 +162,9 @@ export default function StreamingPage() {
           <p className="text-center text-muted-foreground py-10">Nenhum filme encontrado.</p>
         )}
 
-        {page < totalPages && (
+        {page < totalPages && !genre && (
           <div className="flex justify-center pt-4">
-            <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="px-8 border-orange-500 text-primary hover:bg-primary hover:text-primary-foreground">
+            <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
               {loadingMore ? "Carregando..." : "Carregar mais"}
             </Button>
           </div>
