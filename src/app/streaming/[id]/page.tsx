@@ -1,7 +1,7 @@
 "use client";
 
 import Cookies from "js-cookie";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Movie } from "@/types";
@@ -31,13 +31,16 @@ export default function StreamingPage() {
   const [providerName, setProviderName] = useState("");
   const [providerLogo, setProviderLogo] = useState("");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<"desc" | "asc">("desc");
+  const [sort, setSort] = useState<"desc" | "asc" | "none">("none");
   const [genre, setGenre] = useState("");
+  const [searching, setSearching] = useState(false);
 
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Initial load for provider/genre (when not searching)
   useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token) { router.push("/login"); return; }
-
+    if (searching) return;
+    setLoading(true);
     async function init() {
       try {
         const provResp = await api.get("/v1/tmdb/providers");
@@ -47,9 +50,10 @@ export default function StreamingPage() {
           setProviderLogo(provider.logo_path);
         }
       } catch {}
-
       try {
-        const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params: { page: 1 } });
+        const params: any = { page: 1 };
+        if (genre) params.with_genres = GENRE_TO_ID[genre];
+        const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params });
         setMovies(resp.data.results || []);
         setTotalPages(resp.data.total_pages || 1);
         setPage(1);
@@ -59,32 +63,141 @@ export default function StreamingPage() {
         setLoading(false);
       }
     }
-
     init();
+  }, [id, genre, searching]);
+
+  // Always reset sort to 'none' when changing provider
+  useEffect(() => {
+    setSort("none");
   }, [id]);
+
+  // Remove duplicate movies before rendering
+  let filtered = Array.from(
+    new Map(movies.map((movie) => [movie.id, movie])).values()
+  );
+
+  // Só aplica sort se o usuário selecionar explicitamente (não aplica por padrão)
+  if (sort && sort !== "none") {
+    filtered = [...filtered].sort((a, b) => sort === "desc" ? b.vote_average - a.vote_average : a.vote_average - b.vote_average);
+  }
+
+  // Search movies across all provider pages
+  useEffect(() => {
+    async function searchMovies() {
+      // Restore default provider list
+      if (search.trim() === "") {
+        setSearching(false);
+
+        try {
+          setLoading(true);
+
+          const params: any = { page: 1 };
+
+          if (genre) {
+            params.with_genres = GENRE_TO_ID[genre];
+          }
+
+          const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, {
+            params,
+          });
+
+          setMovies(resp.data.results || []);
+          setTotalPages(resp.data.total_pages || 1);
+          setPage(1);
+        } catch {
+          setMovies([]);
+        } finally {
+          setLoading(false);
+        }
+
+        return;
+      }
+
+      setSearching(true);
+
+      if (searchTimeout.current) {
+        clearTimeout(searchTimeout.current);
+      }
+
+      searchTimeout.current = setTimeout(async () => {
+        try {
+          const allResults: Movie[] = [];
+
+          // Fetch multiple pages to search everything
+          for (let currentPage = 1; currentPage <= 8; currentPage++) {
+            const params: any = {
+              page: currentPage,
+            };
+
+            if (genre) {
+              params.with_genres = GENRE_TO_ID[genre];
+            }
+
+            const resp = await api.get(
+              `/v1/tmdb/providers/${id}/movies`,
+              { params }
+            );
+
+            const results = resp.data.results || [];
+
+            allResults.push(...results);
+          }
+
+          // Local filter after loading pages
+          const filteredResults = allResults.filter((movie) =>
+            movie.title.toLowerCase().includes(search.toLowerCase())
+          );
+
+          // Remove duplicated movies by ID
+          const uniqueMovies = Array.from(
+            new Map(
+              filteredResults.map((movie) => [movie.id, movie])
+            ).values()
+          );
+
+          setMovies(uniqueMovies);
+        } catch (err) {
+          console.error(err);
+          setMovies([]);
+        }
+      }, 300);
+
+      return () => {
+        if (searchTimeout.current) {
+          clearTimeout(searchTimeout.current);
+        }
+      };
+    }
+
+    searchMovies();
+  }, [search, genre, id]);
 
   async function loadMore() {
     setLoadingMore(true);
     try {
       const next = page + 1;
-      const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params: { page: next } });
-      setMovies((prev) => [...prev, ...(resp.data.results || [])]);
+      const params: any = { page: next };
+      if (genre) params.with_genres = GENRE_TO_ID[genre];
+      if (search.trim() !== "") params.query = search;
+      const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, { params });
+      setMovies((prev) => {
+        const merged = [...prev, ...(resp.data.results || [])];
+        return Array.from(
+          new Map(merged.map((movie) => [movie.id, movie])).values()
+        );
+      });
       setPage(next);
-    } catch {} finally {
+    } catch {
+    } finally {
       setLoadingMore(false);
     }
   }
-
-  const filtered = movies
-    .filter((m) => !search || m.title.toLowerCase().includes(search.toLowerCase()))
-    .filter((m) => !genre || m.genres?.some((g) => g.id === GENRE_TO_ID[genre]))
-    .sort((a, b) => sort === "desc" ? b.vote_average - a.vote_average : a.vote_average - b.vote_average);
 
   if (loading) return (
     <div className="min-h-screen bg-background">
       <NavBar showBack />
       <div className="flex justify-center items-center h-64">
-        <div className="animate-pulse text-muted-foreground">Carregando...</div>
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     </div>
   );
@@ -109,7 +222,7 @@ export default function StreamingPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por título..."
+            placeholder="Search by title..."
             className="h-11 sm:w-72"
           />
           <select
@@ -124,18 +237,19 @@ export default function StreamingPage() {
           </select>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as "desc" | "asc")}
+            onChange={(e) => setSort(e.target.value as "desc" | "asc" | "none")}
             className="h-11 rounded-lg border border-border bg-background px-3 text-sm sm:w-48"
           >
+            <option value="none">Default</option>
             <option value="desc">Highest Rated</option>
             <option value="asc">Lowest Rated</option>
           </select>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-5">
-          {filtered.map((movie) => (
+          {filtered.map((movie, index) => (
             <div
-              key={movie.id}
+              key={`${movie.id}-${index}`}
               className="relative cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 hover:-translate-y-1 hover:scale-[1.02] transition-all duration-200"
               onClick={() => router.push(`/movies/${movie.id}`)}
             >
@@ -159,13 +273,13 @@ export default function StreamingPage() {
         </div>
 
         {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-10">Nenhum filme encontrado.</p>
+          <p className="text-center text-muted-foreground py-10">No movies found.</p>
         )}
 
-        {page < totalPages && !genre && (
+        {!searching && page < totalPages && (
           <div className="flex justify-center pt-4">
             <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              {loadingMore ? "Carregando..." : "Carregar mais"}
+              {loadingMore ? "Loading..." : "Load more"}
             </Button>
           </div>
         )}
