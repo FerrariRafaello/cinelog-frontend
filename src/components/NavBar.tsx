@@ -15,9 +15,9 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 grid grid-cols-3 items-center">
-      {/* Esquerda */}
-      <div className="min-w-0">
+    <nav className="border-b border-border px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4">
+      {/* Esquerda — flex-1 so it never pushes center */}
+      <div className="flex-1 min-w-0">
         {showBack ? (
           <button
             onClick={() => router.back()}
@@ -39,8 +39,8 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
         )}
       </div>
 
-      {/* Centro */}
-      <div className="flex justify-center">
+      {/* Centro — flex-shrink-0 garante que nunca é sobreposto */}
+      <div className="flex-shrink-0">
         <h1
           className="text-xl sm:text-2xl font-bold tracking-tight cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => router.push("/")}
@@ -49,24 +49,25 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
         </h1>
       </div>
 
-      {/* Direita */}
-      <div className="flex justify-end items-center gap-2">
-        {/* Desktop — só aparece em lg+ */}
-        <div className="hidden lg:flex items-center gap-2">
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => {
+      {/* Direita — flex-1 alinhado à direita */}
+      <div className="flex-1 flex justify-end items-center gap-2">
+        {/* Desktop — só aparece em xl+ */}
+        <div className="hidden xl:flex items-center gap-1.5">
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => {
             if (window.location.pathname === "/") {
               window.scrollTo({ top: 0, behavior: "smooth" });
             } else {
               router.push("/");
             }
           }}>Home</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Profile</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Profile</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews?mode=following")}>Following</Button>
           {showLogout && <LogoutDialog />}
         </div>
 
-        {/* Mobile/tablet — hambúrguer até lg */}
-        <div className="relative lg:hidden">
+        {/* Mobile/tablet — hambúrguer até xl */}
+        <div className="relative xl:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
@@ -76,8 +77,8 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
             ☰
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-11 z-50 flex flex-col gap-1 rounded-xl border border-border bg-card shadow-xl p-2 min-w-36">
-              <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => {
+            <div className="absolute right-0 top-11 z-50 flex flex-col gap-1 rounded-xl border border-border bg-card shadow-xl p-2 min-w-40">
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => {
                 setMenuOpen(false);
                 if (window.location.pathname === "/") {
                   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -85,8 +86,9 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
                   router.push("/");
                 }
               }}>Home</button>
-              <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Profile</button>
-              <button className="px-4 py-2 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews"); setMenuOpen(false); }}>Reviews</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Profile</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews"); setMenuOpen(false); }}>Reviews</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews?mode=following"); setMenuOpen(false); }}>Following</button>
               {showLogout && (
                 <div className="px-2 pt-1 border-t border-border mt-1">
                   <LogoutDialog />

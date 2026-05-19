@@ -50,6 +50,14 @@ function ProfileContent() {
     const [reviewsCanScrollRight, setReviewsCanScrollRight] = useState(false);
     const [watchlistCanScrollLeft, setWatchlistCanScrollLeft] = useState(false);
     const [watchlistCanScrollRight, setWatchlistCanScrollRight] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [followLoading, setFollowLoading] = useState(false);
+    const [followersOpen, setFollowersOpen] = useState(false);
+    const [followingOpen, setFollowingOpen] = useState(false);
+    const [followersList, setFollowersList] = useState<{ id: number; name: string; avatar_id?: string }[]>([]);
+    const [followingList, setFollowingList] = useState<{ id: number; name: string; avatar_id?: string }[]>([]);
 
 
     useEffect(() => {
@@ -76,6 +84,9 @@ function ProfileContent() {
           setBio(resp.data.bio || "");
           setPronouns(resp.data.pronouns || "");
           setFavoriteGenres(resp.data.favorite_genres || "");
+          setIsFollowing(resp.data.is_following ?? false);
+          setFollowersCount(resp.data.followers_count ?? 0);
+          setFollowingCount(resp.data.following_count ?? 0);
         } catch {
           setUserName("");
         } finally {
@@ -241,6 +252,46 @@ function ProfileContent() {
     }
 
 
+    async function handleFollow() {
+      if (!profileUserId) return;
+      setFollowLoading(true);
+      try {
+        if (isFollowing) {
+          const resp = await api.delete(`/v1/users/${profileUserId}/follow`);
+          setIsFollowing(resp.data.is_following);
+          setFollowersCount(resp.data.followers_count);
+        } else {
+          const resp = await api.post(`/v1/users/${profileUserId}/follow`);
+          setIsFollowing(resp.data.is_following);
+          setFollowersCount(resp.data.followers_count);
+        }
+      } catch {
+        toast.error("Não foi possível atualizar o follow.");
+      } finally {
+        setFollowLoading(false);
+      }
+    }
+
+    async function fetchFollowers() {
+      if (!profileUserId) return;
+      try {
+        const resp = await api.get(`/v1/users/${profileUserId}/followers`);
+        setFollowersList(resp.data || []);
+      } catch {
+        setFollowersList([]);
+      }
+    }
+
+    async function fetchFollowing() {
+      if (!profileUserId) return;
+      try {
+        const resp = await api.get(`/v1/users/${profileUserId}/following`);
+        setFollowingList(resp.data || []);
+      } catch {
+        setFollowingList([]);
+      }
+    }
+
     if (!checked) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
@@ -268,10 +319,10 @@ function ProfileContent() {
         <div className="space-y-3">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="text-4xl font-bold">{userName || `User #${profileUserId}`}</h2>
+              <h2 className="text-2xl sm:text-4xl font-bold">{userName || `User #${profileUserId}`}</h2>
               {pronouns && <p className="text-muted-foreground text-base mt-1">{pronouns}</p>}
             </div>
-            {isOwnProfile && viewerUserId !== null && (
+            {isOwnProfile && viewerUserId !== null ? (
               <div className="flex items-center gap-2">
                 <EditProfileDialog
                   userId={viewerUserId}
@@ -292,6 +343,16 @@ function ProfileContent() {
                   Delete Profile
                 </Button>
               </div>
+            ) : (
+              <Button
+                type="button"
+                variant={isFollowing ? "outline" : "default"}
+                className="h-10 px-6 font-semibold"
+                onClick={handleFollow}
+                disabled={followLoading}
+              >
+                {followLoading ? "..." : isFollowing ? "Seguindo ✓" : "Seguir"}
+              </Button>
             )}
           </div>
 
@@ -308,16 +369,38 @@ function ProfileContent() {
           )}
 
           {/* Stats */}
-          <div className="flex items-center gap-8 pt-2">
+          <div className="flex items-center gap-6 pt-2 flex-wrap">
             <div>
               <p className="text-3xl font-bold">{reviews.length}</p>
               <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Reviews</p>
             </div>
+            {isOwnProfile && (
+              <>
+                <div className="w-px h-10 bg-border" />
+                <div>
+                  <p className="text-3xl font-bold">{watchlist.length}</p>
+                  <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Watchlist</p>
+                </div>
+              </>
+            )}
             <div className="w-px h-10 bg-border" />
-            <div>
-              <p className="text-3xl font-bold">{watchlist.length}</p>
-              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Watchlist</p>
-            </div>
+            <button
+              type="button"
+              className="text-left hover:opacity-70 transition-opacity"
+              onClick={() => { setFollowersOpen(true); fetchFollowers(); }}
+            >
+              <p className="text-3xl font-bold">{followersCount}</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Seguidores</p>
+            </button>
+            <div className="w-px h-10 bg-border" />
+            <button
+              type="button"
+              className="text-left hover:opacity-70 transition-opacity"
+              onClick={() => { setFollowingOpen(true); fetchFollowing(); }}
+            >
+              <p className="text-3xl font-bold">{followingCount}</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Seguindo</p>
+            </button>
           </div>
         </div>
 
@@ -485,6 +568,64 @@ function ProfileContent() {
               {deletingProfile ? "Deleting..." : "Yes"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Followers dialog */}
+      <Dialog open={followersOpen} onOpenChange={setFollowersOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Seguidores</DialogTitle>
+            <DialogDescription />
+          </DialogHeader>
+          <div className="space-y-1 max-h-80 overflow-y-auto -mx-2">
+            {followersList.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">Nenhum seguidor ainda.</p>
+            ) : (
+              followersList.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => { setFollowersOpen(false); router.push(`/profile?user=${u.id}`); }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-full ${getAvatarBg(u.avatar_id ?? null)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-sm">{u.name}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Following dialog */}
+      <Dialog open={followingOpen} onOpenChange={setFollowingOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Seguindo</DialogTitle>
+            <DialogDescription />
+          </DialogHeader>
+          <div className="space-y-1 max-h-80 overflow-y-auto -mx-2">
+            {followingList.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-6">Não está seguindo ninguém ainda.</p>
+            ) : (
+              followingList.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => { setFollowingOpen(false); router.push(`/profile?user=${u.id}`); }}
+                  className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl hover:bg-muted transition-colors"
+                >
+                  <div className={`w-9 h-9 rounded-full ${getAvatarBg(u.avatar_id ?? null)} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-semibold text-sm">{u.name}</span>
+                </button>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

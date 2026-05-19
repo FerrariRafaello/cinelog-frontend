@@ -17,6 +17,16 @@ const GENRE_TO_ID: Record<string, number> = {
   "Sci-Fi": 878, Thriller: 53, War: 10752,
 };
 
+// Normaliza string para busca tolerante: remove acentos, colapsa espaços, lowercase
+function normalizeStr(s: string) {
+  return s
+    .trim()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
 
 export default function StreamingPage() {
   const { id } = useParams();
@@ -83,93 +93,43 @@ export default function StreamingPage() {
 
   // Search movies across all provider pages
   useEffect(() => {
-    async function searchMovies() {
-      // Restore default provider list
-      if (search.trim() === "") {
-        setSearching(false);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
 
-        try {
-          setLoading(true);
-
-          const params: any = { page: 1 };
-
-          if (genre) {
-            params.with_genres = GENRE_TO_ID[genre];
-          }
-
-          const resp = await api.get(`/v1/tmdb/providers/${id}/movies`, {
-            params,
-          });
-
-          setMovies(resp.data.results || []);
-          setTotalPages(resp.data.total_pages || 1);
-          setPage(1);
-        } catch {
-          setMovies([]);
-        } finally {
-          setLoading(false);
-        }
-
-        return;
-      }
-
-      setSearching(true);
-
-      if (searchTimeout.current) {
-        clearTimeout(searchTimeout.current);
-      }
-
-      searchTimeout.current = setTimeout(async () => {
-        try {
-          const allResults: Movie[] = [];
-
-          // Fetch multiple pages to search everything
-          for (let currentPage = 1; currentPage <= 8; currentPage++) {
-            const params: any = {
-              page: currentPage,
-            };
-
-            if (genre) {
-              params.with_genres = GENRE_TO_ID[genre];
-            }
-
-            const resp = await api.get(
-              `/v1/tmdb/providers/${id}/movies`,
-              { params }
-            );
-
-            const results = resp.data.results || [];
-
-            allResults.push(...results);
-          }
-
-          // Local filter after loading pages
-          const filteredResults = allResults.filter((movie) =>
-            movie.title.toLowerCase().includes(search.toLowerCase())
-          );
-
-          // Remove duplicated movies by ID
-          const uniqueMovies = Array.from(
-            new Map(
-              filteredResults.map((movie) => [movie.id, movie])
-            ).values()
-          );
-
-          setMovies(uniqueMovies);
-        } catch (err) {
-          console.error(err);
-          setMovies([]);
-        }
-      }, 300);
-
-      return () => {
-        if (searchTimeout.current) {
-          clearTimeout(searchTimeout.current);
-        }
-      };
+    if (search.trim() === "") {
+      setSearching(false);
+      return;
     }
 
-    searchMovies();
+    setSearching(true);
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const pageNums = Array.from({ length: 8 }, (_, i) => i + 1);
+        const responses = await Promise.all(
+          pageNums.map((pg) => {
+            const params: any = { page: pg };
+            if (genre) params.with_genres = GENRE_TO_ID[genre];
+            return api.get(`/v1/tmdb/providers/${id}/movies`, { params });
+          })
+        );
+        const allResults: Movie[] = responses.flatMap((r) => r.data.results || []);
+        const q = normalizeStr(search);
+        const uniqueMovies = Array.from(
+          new Map(
+            allResults
+              .filter((m) => normalizeStr(m.title).includes(q))
+              .map((m) => [m.id, m])
+          ).values()
+        );
+        setMovies(uniqueMovies);
+      } catch (err) {
+        console.error(err);
+        setMovies([]);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
   }, [search, genre, id]);
 
   async function loadMore() {
