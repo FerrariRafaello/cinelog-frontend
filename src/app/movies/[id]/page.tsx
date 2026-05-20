@@ -29,8 +29,7 @@ export default function MoviePage() {
     const [providers, setProviders]=useState<any[]>([]);
     const [inWatchlist, setInWatchlist]=useState(false);
     const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
-    const [showAllReviews, setShowAllReviews] = useState(false);
-    const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
+const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
     const [castCanScrollLeft, setCastCanScrollLeft] = useState(false);
     const [castCanScrollRight, setCastCanScrollRight] = useState(false);
     const castScrollRef = useRef<HTMLDivElement>(null);
@@ -44,8 +43,13 @@ export default function MoviePage() {
         router.push("/login");
         return;
       }
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      setCurrentUserId(parseInt(payload.sub));
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setCurrentUserId(parseInt(payload.sub));
+      } catch {
+        router.push("/login");
+        return;
+      }
       fetchMovie();
       fetchReviews();
       fetchCredits();
@@ -255,11 +259,6 @@ export default function MoviePage() {
     if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!movie) return null;
 
-    const imdbPlayUrl = movie.imdb_id
-      ? `https://www.playimdb.com/title/${movie.imdb_id}/`
-      : null;
-
-
     return (
     <div className="min-h-screen bg-background">
       <NavBar showBack />
@@ -315,16 +314,6 @@ export default function MoviePage() {
                 {trailer && (
                   <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
                     ▶ Watch Trailer
-                  </a>
-                )}
-                {imdbPlayUrl && (
-                  <a
-                    href={imdbPlayUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 text-white text-sm sm:text-base font-medium hover:bg-emerald-700 transition-colors"
-                  >
-                    ▶ Assistir filme
                   </a>
                 )}
               </div>

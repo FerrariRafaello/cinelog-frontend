@@ -17,7 +17,7 @@ export const viewport={
 };
 
 export const metadata: Metadata = {
-  title: "CritCine",
+  title: "Cinelog",
   description: "Movie rating platform",
   icons: {
     icon: "/icon.svg",

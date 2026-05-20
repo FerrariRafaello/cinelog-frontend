@@ -4,122 +4,17 @@
 let homeScrollY = 0;
 
 import Cookies from "js-cookie";
-import { useState, useRef, Suspense, memo } from "react";
+import { useState, useRef, Suspense, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { Movie } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavBar } from "@/components/NavBar";
-import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { MovieRow } from "@/components/MovieRow";
+import { GENRE_TO_ID } from "@/lib/genres";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
-
-// Memoized so unrelated state changes on the home page don't re-render every row
-const MovieRow = memo(function MovieRow({ title, movieList, scrollRef, router, nowPlayingIds }: { title: string; movieList: Movie[]; scrollRef: React.RefObject<HTMLDivElement | null>; router: ReturnType<typeof useRouter>; nowPlayingIds?: Set<number> }) {
-  if (movieList.length === 0) return null;
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const hasScrolledRef = useRef(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    function check() {
-      if (!el) return;
-      const scrolled = el.scrollLeft > 8;
-      if (scrolled) hasScrolledRef.current = true;
-      const atStart = el.scrollLeft <= 8;
-      if (atStart) {
-        hasScrolledRef.current = false;
-        setCanScrollLeft(false);
-      } else {
-        setCanScrollLeft(hasScrolledRef.current);
-      }
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
-    }
-    el.addEventListener("scroll", check, { passive: true });
-    requestAnimationFrame(check);
-    return () => {
-      el.removeEventListener("scroll", check);
-    };
-  }, [movieList]);
-
-  function scroll(dir: "left" | "right") {
-    if (!scrollRef.current) return;
-    const step = Math.max(scrollRef.current.clientWidth * 0.85, 280);
-    scrollRef.current.scrollBy({ left: dir === "right" ? step : -step, behavior: "smooth" });
-    if (dir === "right") {
-      hasScrolledRef.current = true;
-      setCanScrollLeft(true);
-    }
-  }
-
-  return (
-    <div className="space-y-1 overflow-visible mx-0 sm:mx-0 lg:mx-0 px-4 sm:px-8 lg:px-12">
-      <div className="flex items-center justify-between pr-2">
-        <h2 className="pl-2 pt-9 text-xl sm:text-2xl font-bold tracking-tight text-foreground/90">{title}</h2>
-      </div>
-      <div className="relative group/row">
-        {canScrollLeft && (
-          <div
-            className="absolute left-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent opacity-0 group-hover/row:opacity-100 transition-opacity duration-200 group/arrow"
-            onClick={() => scroll("left")}
-          >
-            <span className="ml-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
-              ‹
-            </span>
-          </div>
-        )}
-
-        <div
-          className={`absolute right-0 top-0 bottom-0 z-20 w-14 sm:w-16 flex items-center justify-end cursor-pointer bg-gradient-to-l from-background/90 to-transparent transition-opacity duration-200 group/arrow ${canScrollRight ? 'group-hover/row:opacity-100' : ''} opacity-0`}
-          onClick={() => scroll("right")}
-        >
-          <span className="mr-2 text-[3.2rem] font-normal text-zinc-400 group-hover/arrow:text-zinc-300 transition-colors leading-none">
-            ›
-          </span>
-        </div>
-
-        <div ref={scrollRef} className="overflow-x-auto overflow-y-visible overscroll-x-none py-4 sm:py-5 px-2 sm:px-3 scrollbar-hide">
-          <div className="flex gap-4 sm:gap-5 w-max pr-4">
-            {movieList.map((movie) => (
-              <div
-                key={movie.id}
-                className="group relative w-40 sm:w-48 lg:w-56 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden ring-1 ring-border/40 hover:ring-2 hover:ring-primary/60 hover:-translate-y-1 hover:scale-[1.02] hover:z-10 transition-all duration-200 will-change-transform"
-                onClick={() => router.push(`/movies/${movie.id}`)}
-              >
-                {movie.poster_path ? (
-                  <>
-                    <img
-                      src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`}
-                      alt={movie.title}
-                      className="w-full aspect-[2/3] object-cover"
-                      loading="lazy"
-                    />
-                    {nowPlayingIds?.has(movie.id) && (
-                      <div className="absolute top-0 left-0 z-10 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-1">
-                        Em Cartaz
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">
-                    No image
-                  </div>
-                )}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 sm:p-4 pt-12">
-                  <p className="text-white text-sm sm:text-base font-bold line-clamp-2 leading-tight">{movie.title}</p>
-                  <p className="text-yellow-400 text-sm sm:text-base font-medium mt-1">⭐ {movie.vote_average.toFixed(1)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
 
 function HomeContent() {
   const router = useRouter();
@@ -198,36 +93,11 @@ function HomeContent() {
       .map((m) => m.id)
   );
   const searchParams = useSearchParams();
-  const trendingRef = useRef<HTMLDivElement>(null);
-  const nowPlayingRef = useRef<HTMLDivElement>(null);
-  const forYouRef = useRef<HTMLDivElement>(null);
-  const topRatedRef = useRef<HTMLDivElement>(null);
-  const animationRef = useRef<HTMLDivElement>(null);
-  const classicsRef = useRef<HTMLDivElement>(null);
-
   const initRef = useRef(false);
   const featuredLengthRef = useRef(0);
   const scrollRestoredRef = useRef(false);
 
   const featuredMovie = featured[featuredIndex] || null;
-
-  const GENRE_TO_ID: Record<string, number> = {
-    Action: 28,
-    Adventure: 12,
-    Animation: 16,
-    Comedy: 35,
-    Crime: 80,
-    Documentary: 99,
-    Drama: 18,
-    Family: 10751,
-    Fantasy: 14,
-    Horror: 27,
-    Mystery: 9648,
-    Romance: 10749,
-    "Sci-Fi": 878,
-    Thriller: 53,
-    War: 10752,
-  };
 
   const goToNextFeatured = () => {
     if (featured.length < 2) return;
@@ -798,8 +668,8 @@ function HomeContent() {
             )}
 
             <div className="relative z-20 -mt-12 sm:-mt-20 lg:-mt-32">
-              <MovieRow title="Trending This Week" movieList={trending} scrollRef={trendingRef} router={router} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Now Playing" movieList={nowPlaying} scrollRef={nowPlayingRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Trending This Week" movieList={trending} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Now Playing" movieList={nowPlaying} nowPlayingIds={nowPlayingIds} />
 
               {top10.length > 0 && (
                 <div className="space-y-1 overflow-visible px-2 sm:px-4 md:px-8 lg:px-12">
@@ -886,7 +756,7 @@ function HomeContent() {
                 </div>
               )}
 
-              <MovieRow title={forYouTitle} movieList={forYou} scrollRef={forYouRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title={forYouTitle} movieList={forYou} nowPlayingIds={nowPlayingIds} />
 
               {providers.length > 0 && (
                 <div className="space-y-1 overflow-visible px-2 sm:px-4 md:px-8 lg:px-12">
@@ -916,9 +786,9 @@ function HomeContent() {
                   </div>
                 </div>
               )}
-              <MovieRow title="Worth Watching Again" movieList={topRated} scrollRef={topRatedRef} router={router} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Animation" movieList={animation} scrollRef={animationRef} router={router} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Classics" movieList={classics} scrollRef={classicsRef} router={router} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Worth Watching Again" movieList={topRated} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Animation" movieList={animation} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Classics" movieList={classics} nowPlayingIds={nowPlayingIds} />
             </div>
           </>
         )}
@@ -929,7 +799,14 @@ function HomeContent() {
             <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Sobre o CritCine</h2>
             <p className="text-base sm:text-lg text-foreground/80 leading-relaxed">
               CritCine é um projeto pessoal de portfólio, criado por{" "}
-              <strong className="text-primary">Rafaello Ferrari</strong>, sem fins lucrativos.
+              <a
+                href="https://www.linkedin.com/in/rafaello-ferrari-0ba87a349/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-400 font-bold hover:underline transition-colors"
+              >
+                Rafaello Ferrari
+              </a>, sem fins lucrativos.
               O objetivo é praticar desenvolvimento full-stack e oferecer um
               espaço gratuito para reviews e descoberta de filmes.
             </p>

@@ -67,8 +67,14 @@ function ProfileContent() {
         router.push("/login");
         return;
       }
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const id = parseInt(payload.sub);
+      let id: number;
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        id = parseInt(payload.sub);
+      } catch {
+        router.push("/login");
+        return;
+      }
       setViewerUserId(id);
 
       const queryUserId = Number(searchParams.get("user"));

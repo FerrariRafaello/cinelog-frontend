@@ -135,7 +135,7 @@ export default function RegisterPage() {
 
     return (
     <div className="relative min-h-screen bg-background overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,oklch(0.75_0.15_55_/_0.18),transparent_45%),radial-gradient(circle_at_15%_65%,oklch(0.65_0.12_200_/_0.18),transparent_45%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,oklch(0.75_0.15_55_/_0.35),transparent_45%),radial-gradient(circle_at_15%_65%,oklch(0.65_0.12_200_/_0.35),transparent_45%)]" />
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,oklch(0.08_0.005_285_/_0.92)_70%)]" />
 
       <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
@@ -259,6 +259,11 @@ export default function RegisterPage() {
                 Ao criar uma conta você concorda que o CritCine não se responsabiliza
                 pelo uso indevido da plataforma, pelo conteúdo de terceiros exibido,
                 nem por qualquer dano direto ou indireto decorrente do uso.
+              </p>
+              <p className="mt-3">
+                Por questões jurídicas, o "E-mail" e o "CPF" são opcionais e não precisam ser preenchidos.
+                O "E-mail" por questão, não precisa ser o original e não precisa de verificação,
+                mas, necessário para logar na plataforma.
               </p>
               <p className="mt-3">
                 Esta plataforma não hospeda conteúdo. Todos os dados de filmes vêm

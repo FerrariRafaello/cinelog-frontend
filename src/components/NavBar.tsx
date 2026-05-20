@@ -34,7 +34,14 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
           <p className="text-[10px] sm:text-xs text-white leading-tight line-clamp-2">
             Plataforma criada para portfolio, sem fins lucrativos.{" "}
             <span className="hidden sm:inline">Desenvolvedor: </span>
-            <strong className="text-primary">Rafaello Ferrari</strong>
+            <a
+              href="https://www.linkedin.com/in/rafaello-ferrari-0ba87a349/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-400 font-bold hover:underline transition-colors"
+            >
+              Rafaello Ferrari
+            </a>
           </p>
         )}
       </div>

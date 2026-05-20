@@ -8,13 +8,7 @@ import { NavBar } from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
-
-const GENRE_TO_ID: Record<string, number> = {
-  Action: 28, Adventure: 12, Animation: 16, Comedy: 35,
-  Crime: 80, Documentary: 99, Drama: 18, Family: 10751,
-  Fantasy: 14, Horror: 27, Mystery: 9648, Romance: 10749,
-  "Sci-Fi": 878, Thriller: 53, War: 10752,
-};
+import { GENRE_TO_ID } from "@/lib/genres";
 
 // Strip accents, collapse whitespace, lowercase — tolerant search across all locales
 function normalizeStr(s: string) {
@@ -121,8 +115,7 @@ export default function StreamingPage() {
           ).values()
         );
         setMovies(uniqueMovies);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setMovies([]);
       }
     }, 300);
