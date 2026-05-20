@@ -85,6 +85,7 @@ src/
 ├── components/
 │   ├── ui/               # shadcn/ui base components
 │   ├── NavBar.tsx        # Responsive navbar with hamburger menu
+│   ├── MovieRow.tsx      # Horizontally scrollable movie row used on the home page
 │   ├── StarRating.tsx    # Interactive and read-only star rating
 │   ├── LogoutDialog.tsx  # Logout confirmation dialog
 │   ├── EditProfileDialog.tsx    # Profile edit modal
@@ -95,6 +96,7 @@ src/
 ├── lib/
 │   ├── api.ts            # Axios instance — JWT interceptor and 401 auto-redirect
 │   ├── auth.ts           # login / register / logout / isAuthenticated utilities
+│   ├── genres.ts         # Shared GENRE_TO_ID constant used by home and streaming pages
 │   ├── profile-options.ts # Static avatar and cover image options
 │   └── utils.ts          # Tailwind class merge helper (cn)
 └── types/
