@@ -24,17 +24,17 @@ export default function RegisterPage() {
     function getPasswordStrength(pwd: string): { label: string; color: string } {
       if (pwd.length === 0) return { label: "", color: "" };
       if (pwd.length < 8 || !/[a-zA-Z]/.test(pwd))
-        return { label: "Weak", color: "text-red-500" };
+        return { label: "Fraca", color: "text-red-500" };
       if (
         pwd.length >= 10 &&
         /[0-9]/.test(pwd) &&
         /[A-Z]/.test(pwd) &&
         /[^a-zA-Z0-9]/.test(pwd)
       )
-        return { label: "Strong", color: "text-green-500" };
+        return { label: "Forte", color: "text-green-500" };
       if (pwd.length >= 8 && /[0-9]/.test(pwd))
-        return { label: "Medium", color: "text-yellow-500" };
-      return { label: "Weak", color: "text-red-500" };
+        return { label: "Média", color: "text-yellow-500" };
+      return { label: "Fraca", color: "text-red-500" };
     }
 
     function formatCPF(value: string): string {
@@ -83,27 +83,27 @@ export default function RegisterPage() {
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.email)) {
-          setError("Please enter a valid email address.");
+          setError("Por favor, insira um e-mail válido.");
           setLoading(false);
           return;
         }
 
         if (form.name.trim().length < 2) {
-          setError("Name must be at least 2 characters.");
+          setError("O nome deve ter pelo menos 2 caracteres.");
           setLoading(false);
           return;
         }
 
         const parsedAge = form.age ? Number.parseInt(form.age, 10) : undefined;
 
-        if (getPasswordStrength(form.password).label === "Weak") {
-          setError("Password is too weak. Use at least 8 characters including letters.");
+        if (getPasswordStrength(form.password).label === "Fraca") {
+          setError("Senha muito fraca. Use pelo menos 8 caracteres com letras.");
           setLoading(false);
           return;
         }
 
         if (form.cpf && !validateCPF(form.cpf)) {
-          setError("Please enter a valid CPF.");
+          setError("CPF inválido.");
           setLoading(false);
           return;
         }
@@ -122,11 +122,11 @@ export default function RegisterPage() {
             const apiMessage = error?.response?.data?.error?.message;
 
             if (status === 409) {
-              setError("Email or CPF already registered.");
+              setError("E-mail ou CPF já cadastrado.");
             } else if (status === 422) {
-              setError(apiMessage || "Invalid registration data. Please review your information.");
+              setError(apiMessage || "Dados inválidos. Revise as informações.");
             } else {
-              setError("Error creating account. Please try again.");
+              setError("Erro ao criar conta. Tente novamente.");
             }
         } finally {
             setLoading(false);
@@ -141,21 +141,21 @@ export default function RegisterPage() {
       <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md p-7 sm:p-8 space-y-6 rounded-2xl border border-border/70 bg-card/85 backdrop-blur-md shadow-2xl">
         <div className="text-center space-y-1">
-          <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Join the club</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-primary/80">Junte-se ao clube</p>
           <h1 className="text-4xl font-bold tracking-tight">CritCine</h1>
-          <p className="text-muted-foreground mt-1 text-base">Create your account</p>
+          <p className="text-muted-foreground mt-1 text-base">Crie sua conta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium">Nome</label>
             <input
               type="text"
               name="name"
               value={form.name}
               onChange={handleChange}
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Your name"
+              placeholder="Seu nome"
               required
               minLength={2}
               maxLength={50}
@@ -163,14 +163,14 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Age <span className="text-muted-foreground text-xs">(optional)</span></label>
+            <label className="text-sm font-medium">Idade <span className="text-muted-foreground text-xs">(opcional)</span></label>
             <input
               type="number"
               name="age"
               value={form.age}
               onChange={handleChange}
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Your age"
+              placeholder="Sua idade"
               min={1}
             />
           </div>
@@ -183,16 +183,16 @@ export default function RegisterPage() {
               value={form.email}
               onChange={handleChange}
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="your@email.com"
+              placeholder="seu@email.com"
               required
             />
             {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
-              <p className="text-xs mt-1 text-red-500">Please enter a valid email address.</p>
+              <p className="text-xs mt-1 text-red-500">Por favor, insira um e-mail válido.</p>
             )}
           </div>
 
           <div>
-            <label className="text-sm font-medium">CPF <span className="text-muted-foreground text-xs">(optional)</span></label>
+            <label className="text-sm font-medium">CPF <span className="text-muted-foreground text-xs">(opcional)</span></label>
             <input
               type="text"
               name="cpf"
@@ -204,7 +204,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Password</label>
+            <label className="text-sm font-medium">Senha</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -220,12 +220,12 @@ export default function RegisterPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? "Ocultar" : "Mostrar"}
               </button>
             </div>
             {form.password && (
               <p className={`text-xs mt-1 ${getPasswordStrength(form.password).color}`}>
-                Password strength: {getPasswordStrength(form.password).label}
+                Força da senha: {getPasswordStrength(form.password).label}
               </p>
             )}
           </div>
@@ -233,14 +233,14 @@ export default function RegisterPage() {
           {error && <p className="text-sm text-destructive">{error}</p>}
 
           <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-            {loading ? "Creating account..." : "Sign up"}
+            {loading ? "Criando conta..." : "Cadastrar"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          Já tem uma conta?{" "}
           <a href="/login" className="text-primary hover:underline font-medium">
-            Sign in
+            Entrar
           </a>
         </p>
       </div>

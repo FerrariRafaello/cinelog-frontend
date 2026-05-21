@@ -75,7 +75,7 @@ function HomeContent() {
   const [topRated, setTopRated] = useState<Movie[]>([]);
   const [animation, setAnimation] = useState<Movie[]>([]);
   const [forYou, setForYou] = useState<Movie[]>([]);
-  const [forYouTitle, setForYouTitle] = useState("Popular Right Now");
+  const [forYouTitle, setForYouTitle] = useState("Populares Agora");
   const [classics, setClassics] = useState<Movie[]>([]);
   const [featured, setFeatured] = useState<Movie[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
@@ -214,9 +214,9 @@ function HomeContent() {
         }
         if (!genreIds) {
           genreIds = "28,18,53";
-          setForYouTitle("Popular Right Now");
+          setForYouTitle("Populares Agora");
         } else {
-          setForYouTitle("For You");
+          setForYouTitle("Para Você");
         }
         const resp = await api.get("/v1/tmdb/for-you", { params: { genres: genreIds } });
         setForYou(resp.data.results.slice(0, 40));
@@ -403,7 +403,7 @@ function HomeContent() {
 
   if (!checked || redirecting || initialLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="animate-pulse text-muted-foreground">Carregando...</div>
     </div>
   );
 
@@ -466,7 +466,7 @@ function HomeContent() {
                   disabled={loading}
                   className="h-full w-full sm:w-auto px-4 sm:px-5 text-sm"
                 >
-                  Search by Genre
+                  Buscar por Gênero
                 </Button>
               </div>
               {showGenreResults && movies.length > 0 && (
@@ -495,13 +495,13 @@ function HomeContent() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search for a movie..."
+                  placeholder="Buscar um filme..."
                   className="h-full text-base sm:text-lg border-border/70 bg-background"
                 />
               </div>
               <div className="h-12 sm:h-14 rounded-xl border border-border bg-card/70 p-1 sm:w-auto flex items-center">
                 <Button type="submit" disabled={loading} className="h-full w-full sm:w-auto px-4 sm:px-5 text-sm">
-                  {loading ? "Searching..." : "Search"}
+                  {loading ? "Buscando..." : "Buscar"}
                 </Button>
               </div>
             </form>
@@ -510,7 +510,7 @@ function HomeContent() {
 
         {movies.length > 0 && (
           <div className="space-y-2 sm:space-y-4 mx-2 sm:mx-4 md:mx-8 lg:mx-12">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Search Results</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Resultados da Busca</h2>
             <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-4 md:gap-5 pt-2">
               {movies.map((movie) => (
                 <div
@@ -526,7 +526,7 @@ function HomeContent() {
                     />
                   ) : (
                     <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">
-                      No image
+                      Sem imagem
                     </div>
                   )}
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 sm:p-4 pt-12">
@@ -605,7 +605,7 @@ function HomeContent() {
                               rel="noopener noreferrer"
                               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white hover:bg-red-700 transition-colors"
                             >
-                              Watch Trailer
+                              Assistir Trailer
                             </a>
                           )}
                           <Button
@@ -613,7 +613,7 @@ function HomeContent() {
                             className="min-h-11 px-4 sm:px-5 lg:h-12 text-sm sm:text-base lg:text-lg"
                             onClick={() => router.push(`/movies/${featuredMovie.id}`)}
                           >
-                            View Details
+                            Ver Detalhes
                           </Button>
                         </div>
 
@@ -668,8 +668,8 @@ function HomeContent() {
             )}
 
             <div className="relative z-20 -mt-12 sm:-mt-20 lg:-mt-32">
-              <MovieRow title="Trending This Week" movieList={trending} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Now Playing" movieList={nowPlaying} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Em Alta Esta Semana" movieList={trending} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="O Que Estamos Assistindo" movieList={nowPlaying} nowPlayingIds={nowPlayingIds} />
 
               {top10.length > 0 && (
                 <div className="space-y-1 overflow-visible px-2 sm:px-4 md:px-8 lg:px-12">
@@ -678,7 +678,7 @@ function HomeContent() {
                     <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
                       <span className="text-6xl sm:text-7xl font-black tracking-tight text-foreground">TOP</span>
                       <span className="text-6xl sm:text-7xl font-black tracking-tight text-primary">10</span>
-                      <span className="text-base sm:text-lg font-semibold text-foreground/60 ml-2">Today in Brazil</span>
+                      <span className="text-base sm:text-lg font-semibold text-foreground/60 ml-2">Hoje no Brasil</span>
                     </div>
                   </div>
                   <div className="relative group/top10 min-w-0">
@@ -741,7 +741,7 @@ function HomeContent() {
                                   loading="lazy"
                                 />
                               ) : (
-                                <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">No image</div>
+                                <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground">Sem imagem</div>
                               )}
                               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-10">
                                 <p className="text-white text-sm font-bold line-clamp-2 leading-tight">{movie.title}</p>
@@ -786,9 +786,9 @@ function HomeContent() {
                   </div>
                 </div>
               )}
-              <MovieRow title="Worth Watching Again" movieList={topRated} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Animation" movieList={animation} nowPlayingIds={nowPlayingIds} />
-              <MovieRow title="Classics" movieList={classics} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Vale Rever" movieList={topRated} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Animação" movieList={animation} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Clássicos" movieList={classics} nowPlayingIds={nowPlayingIds} />
             </div>
           </>
         )}

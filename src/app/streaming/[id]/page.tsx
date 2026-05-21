@@ -150,7 +150,7 @@ export default function StreamingPage() {
     <div className="min-h-screen bg-background">
       <NavBar showBack />
       <div className="flex justify-center items-center h-64">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>
     </div>
   );
@@ -175,7 +175,7 @@ export default function StreamingPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title..."
+            placeholder="Buscar por título..."
             className="h-11 sm:w-72"
           />
           <select
@@ -183,7 +183,7 @@ export default function StreamingPage() {
             onChange={(e) => setGenre(e.target.value)}
             className="h-11 rounded-lg border border-border bg-background px-3 text-sm sm:w-48"
           >
-            <option value="">All Genres</option>
+            <option value="">Todos os Gêneros</option>
             {Object.keys(GENRE_TO_ID).map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
@@ -193,9 +193,9 @@ export default function StreamingPage() {
             onChange={(e) => setSort(e.target.value as "desc" | "asc" | "none")}
             className="h-11 rounded-lg border border-border bg-background px-3 text-sm sm:w-48"
           >
-            <option value="none">Default</option>
-            <option value="desc">Highest Rated</option>
-            <option value="asc">Lowest Rated</option>
+            <option value="none">Padrão</option>
+            <option value="desc">Mais Bem Avaliados</option>
+            <option value="asc">Menos Avaliados</option>
           </select>
         </div>
 
@@ -214,7 +214,7 @@ export default function StreamingPage() {
                 />
               ) : (
                 <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-xs">
-                  No image
+                  Sem imagem
                 </div>
               )}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent p-3 pt-10">
@@ -226,13 +226,13 @@ export default function StreamingPage() {
         </div>
 
         {filtered.length === 0 && (
-          <p className="text-center text-muted-foreground py-10">No movies found.</p>
+          <p className="text-center text-muted-foreground py-10">Nenhum filme encontrado.</p>
         )}
 
         {!searching && page < totalPages && (
           <div className="flex justify-center pt-4">
             <Button variant="outline" onClick={loadMore} disabled={loadingMore} className="px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              {loadingMore ? "Loading..." : "Load more"}
+              {loadingMore ? "Carregando..." : "Carregar mais"}
             </Button>
           </div>
         )}

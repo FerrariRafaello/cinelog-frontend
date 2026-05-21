@@ -36,7 +36,7 @@ export function AvatarPickerDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Choose your avatar color</DialogTitle>
+          <DialogTitle>Escolha a cor do seu avatar</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-4 gap-4 py-4">
           {avatarOptions.map((opt) => (

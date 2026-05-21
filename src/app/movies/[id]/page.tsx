@@ -151,13 +151,13 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
             setComment("");
             fetchReviews();
         }catch{
-            toast.error("Error submitting review. You may have already reviewed this movie.");
+            toast.error("Erro ao publicar. Você já pode ter avaliado este filme.");
         }
     }
 
     async function handleWatchlist() {
         if (inWatchlist) {
-            toast.info("Already in watchlist.");
+            toast.info("Já está na sua lista.");
             return;
         }
         try{
@@ -165,16 +165,16 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                 tmdb_movie_id: Number(id),
                 status:status || "want_to_watch",
             });
-            toast.success("Added to watchlist!");
+            toast.success("Adicionado à lista!");
             setInWatchlist(true);
         }catch(error:any){
             const message = String(error?.response?.data?.error?.message || "").toLowerCase();
             if (message.includes("already") && message.includes("watchlist")) {
               setInWatchlist(true);
-              toast.info("Already in watchlist.");
+              toast.info("Já está na sua lista.");
               return;
             }
-            toast.error("Could not add movie to watchlist.");
+            toast.error("Não foi possível adicionar à lista.");
         }
     }
 
@@ -199,7 +199,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
     async function handleRemoveFromWatchlist() {
       if (!watchlistItemId) {
-        toast.error("Could not remove from watchlist.");
+        toast.error("Não foi possível remover da lista.");
         return;
       }
 
@@ -208,9 +208,9 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
         setInWatchlist(false);
         setWatchlistItemId(null);
         setStatus("want_to_watch");
-        toast.success("Removed from watchlist.");
+        toast.success("Removido da lista.");
       } catch {
-        toast.error("Could not remove from watchlist.");
+        toast.error("Não foi possível remover da lista.");
       }
     }
 
@@ -221,11 +221,11 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
         setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
       } catch(error:any) {
         if (error?.response?.status === 409) {
-          toast.info("You already liked this review.");
+          toast.info("Você já curtiu esta crítica.");
           setReviews((prev) => prev.map((r) => (r.id === reviewId ? { ...r, liked_by_me: true } : r)));
           return;
         }
-        toast.error("Could not register like.");
+        toast.error("Não foi possível registrar a curtida.");
       }
     }
 
@@ -253,10 +253,10 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
     if (!checked) return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>
     );
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
     if (!movie) return null;
 
     return (
@@ -306,14 +306,14 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
               )}
               {credits.crew && (
                 <p className="text-base sm:text-lg">
-                  🎬 <span className="font-medium">Director:</span>{" "}
+                  🎬 <span className="font-medium">Diretor:</span>{" "}
                   {credits.crew.find((c: any) => c.job === "Director")?.name || "Unknown"}
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
                 {trailer && (
                   <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
-                    ▶ Watch Trailer
+                    ▶ Assistir Trailer
                   </a>
                 )}
               </div>
@@ -323,10 +323,10 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                   onChange={(e) => setStatus(e.target.value)}
                   className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm sm:text-base sm:min-w-52"
                 >
-                  <option value="want_to_watch">Want to watch</option>
-                  <option value="watching">Watching</option>
-                  <option value="watched">Watched</option>
-                  <option value="dropped">Dropped</option>
+                  <option value="want_to_watch">Quero assistir</option>
+                  <option value="watching">Assistindo</option>
+                  <option value="watched">Assistido</option>
+                  <option value="dropped">Abandonado</option>
                 </select>
                 <div className="flex items-center gap-2">
                   <Button
@@ -335,7 +335,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                     disabled={inWatchlist}
                     className="h-11 text-sm sm:text-base"
                   >
-                    {inWatchlist ? "Already in watchlist" : "Add to Watchlist"}
+                    {inWatchlist ? "Já na sua lista" : "Adicionar à Lista"}
                   </Button>
                   {inWatchlist && (
                     <Button
@@ -343,8 +343,8 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                       variant="ghost"
                       onClick={handleRemoveFromWatchlist}
                       className="h-11 w-11 rounded-lg border border-border/70 text-destructive hover:bg-destructive/10"
-                      aria-label="Remove from watchlist"
-                      title="Remove from watchlist"
+                      aria-label="Remover da lista"
+                      title="Remover da lista"
                     >
                       X
                     </Button>
@@ -361,7 +361,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
         {credits.cast.length > 0 && (
           <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
-            <h3 className="text-2xl font-bold tracking-tight">Cast</h3>
+            <h3 className="text-2xl font-bold tracking-tight">Elenco</h3>
             <div className="relative group/cast">
               {castCanScrollLeft && (
                 <div
@@ -396,7 +396,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                       />
                     ) : (
                       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
-                        No photo
+                        Sem foto
                       </div>
                     )}
                     <p className="text-base sm:text-lg font-medium mt-1 line-clamp-2">{actor.name}</p>
@@ -410,7 +410,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
 
         {providers.length > 0 && (
           <section className="space-y-3 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
-            <h3 className="text-2xl font-bold tracking-tight">Where to Watch</h3>
+            <h3 className="text-2xl font-bold tracking-tight">Onde Assistir</h3>
             <div className="flex gap-4 flex-wrap">
               {providers.map((p: any) => (
                 <a
@@ -429,12 +429,12 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
                 </a>
               ))}
             </div>
-            <p className="text-sm text-muted-foreground">Powered by JustWatch</p>
+            <p className="text-sm text-muted-foreground">Fornecido por JustWatch</p>
           </section>
         )}
 
         <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
-          <h3 className="text-2xl font-bold tracking-tight">Write a Review</h3>
+          <h3 className="text-2xl font-bold tracking-tight">Escrever uma Crítica</h3>
           <form onSubmit={handleReview} className="space-y-3">
             <StarRating
               value={parseFloat(rating) || 0}
@@ -443,20 +443,20 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Write your review... (optional)"
+              placeholder="Escreva sua crítica... (opcional)"
               maxLength={500}
               className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-base sm:text-lg min-h-24"
             />
             <p className={`text-sm text-right mt-1 ${comment.length >= 480 ? "text-destructive" : "text-muted-foreground"}`}>
               {comment.length}/500
             </p>
-            <Button type="submit" className="h-11 text-base sm:text-lg">Submit Review</Button>
+            <Button type="submit" className="h-11 text-base sm:text-lg">Publicar Crítica</Button>
           </form>
         </section>
 
         <section className="space-y-4 rounded-2xl border border-border/60 bg-card/70 p-4 sm:p-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-bold tracking-tight">Reviews ({reviews.length})</h3>
+            <h3 className="text-2xl font-bold tracking-tight">Críticas ({reviews.length})</h3>
             {reviews.length > 10 && (
               <Button
                 variant="outline"
@@ -468,7 +468,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
             )}
           </div>
           {reviews.length === 0 && (
-            <p className="text-muted-foreground text-base sm:text-lg">No reviews yet. Be the first!</p>
+            <p className="text-muted-foreground text-base sm:text-lg">Sem críticas ainda. Seja o primeiro!</p>
           )}
           {reviews.slice(0, 10).map((review) => (
             <div key={review.id} className="p-4 rounded-xl border border-border space-y-2 bg-background/70">

@@ -201,7 +201,7 @@ function ReviewsContent() {
 
   if (!checked) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="animate-pulse text-muted-foreground">Carregando...</div>
     </div>
   );
 
@@ -237,7 +237,7 @@ function ReviewsContent() {
           <section className="space-y-7 rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.08] backdrop-blur-sm p-6 sm:p-8 mb-8">
             <div className="flex items-center gap-2">
               <span className="text-2xl">🔥</span>
-              <h2 className="text-2xl font-bold tracking-tight">Trending Reviews</h2>
+              <h2 className="text-2xl font-bold tracking-tight">Críticas em Alta</h2>
             </div>
 
             {/* Spotlight — #1 most liked review with a comment */}
@@ -293,7 +293,7 @@ function ReviewsContent() {
                         onClick={() => handleLike(spotlightReview.id)}
                         className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${spotlightReview.liked_by_me ? "border-primary text-primary bg-primary/10" : "border-border/70 bg-card/80 hover:border-primary/60"}`}
                       >
-                        👍 {spotlightReview.likes} likes
+                        👍 {spotlightReview.likes} curtidas
                       </button>
                       <span className="text-sm text-muted-foreground">
                         {new Date(spotlightReview.created_at).toLocaleDateString("pt-BR")}
@@ -307,7 +307,7 @@ function ReviewsContent() {
             {/* Top Reviewers Leaderboard */}
             {topReviewers.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Reviewers</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Top Críticos</h3>
                 <div className="flex flex-wrap gap-2">
                   {topReviewers.map((reviewer, idx) => (
                     <button
@@ -328,7 +328,7 @@ function ReviewsContent() {
             {/* Most Liked Reviews Carousel */}
             {trendingWithComment.length > 1 && (
               <div>
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Most Liked</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Mais Curtidas</h3>
                 <div className="relative group/mostliked">
                   {/* Seta esquerda */}
                   <div
@@ -369,7 +369,7 @@ function ReviewsContent() {
                               className="w-full h-32 object-cover object-top"
                             />
                           ) : (
-                            <div className="w-full h-32 bg-muted flex items-center justify-center text-muted-foreground text-sm">No image</div>
+                            <div className="w-full h-32 bg-muted flex items-center justify-center text-muted-foreground text-sm">Sem imagem</div>
                           )}
                           <div className="p-3 space-y-1.5">
                             <p className="font-bold text-base text-white line-clamp-1">{movie?.title || `#${review.tmdb_movie_id}`}</p>
@@ -418,7 +418,7 @@ function ReviewsContent() {
                   onClick={() => setFeedMode(mode)}
                   className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-colors ${feedMode === mode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  {mode === "global" ? "Global" : "Following"}
+                  {mode === "global" ? "Global" : "Seguindo"}
                 </button>
               ))}
             </div>
@@ -432,14 +432,14 @@ function ReviewsContent() {
                   onClick={() => setSort(s)}
                   className={`px-4 py-1.5 rounded-full text-sm border transition-colors ${sort === s ? "bg-primary text-primary-foreground border-primary" : "border-border/70 bg-card/80 text-foreground hover:border-primary/60"}`}
                 >
-                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                  {({ newest: "Mais recentes", oldest: "Mais antigas", popular: "Populares" } as Record<string, string>)[s]}
                 </button>
               ))}
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full max-w-2xl">
-              <Input value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Search by username..." className="h-11 sm:h-14 text-sm sm:text-base" />
-              <Input value={searchMovie} onChange={(e) => setSearchMovie(e.target.value)} placeholder="Search by movie..." className="h-11 sm:h-14 text-sm sm:text-base" />
-              <Button type="submit" className="h-11 sm:h-14 px-5 sm:px-7 text-sm sm:text-base w-full sm:w-auto">Search</Button>
+              <Input value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Buscar por usuário..." className="h-11 sm:h-14 text-sm sm:text-base" />
+              <Input value={searchMovie} onChange={(e) => setSearchMovie(e.target.value)} placeholder="Buscar por filme..." className="h-11 sm:h-14 text-sm sm:text-base" />
+              <Button type="submit" className="h-11 sm:h-14 px-5 sm:px-7 text-sm sm:text-base w-full sm:w-auto">Buscar</Button>
             </div>
           </form>
           {isFiltering && (
@@ -470,7 +470,7 @@ function ReviewsContent() {
                 </div>
               ))
             ) : (
-              <p className="text-muted-foreground text-sm">Loading reviews...</p>
+              <p className="text-muted-foreground text-sm">Carregando críticas...</p>
             )}
           </div>
         )}
@@ -517,7 +517,7 @@ function ReviewsContent() {
                           {userName}
                         </button>
                         <span className="text-xs text-muted-foreground">
-                          {userReviews.length} review{userReviews.length !== 1 ? "s" : ""}
+                          {userReviews.length} crítica{userReviews.length !== 1 ? "s" : ""}
                         </span>
                       </div>
                     </div>
@@ -547,7 +547,7 @@ function ReviewsContent() {
                               className="w-full h-28 object-cover"
                             />
                           ) : (
-                            <div className="w-full h-28 bg-muted flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                            <div className="w-full h-28 bg-muted flex items-center justify-center text-muted-foreground text-xs">Sem imagem</div>
                           )}
                           <div className="p-3 space-y-1.5">
                             <p className="font-semibold text-sm line-clamp-1">{movie?.title || `Movie #${review.tmdb_movie_id}`}</p>
@@ -582,7 +582,7 @@ function ReviewsContent() {
         {!loading && feedMode === "global" && (
           <>
             {reviews.length === 0 && (
-              <p className="text-muted-foreground text-sm mt-6">No reviews found.</p>
+              <p className="text-muted-foreground text-sm mt-6">Nenhuma crítica encontrada.</p>
             )}
             <div className="max-w-5xl mx-auto [column-count:1] md:[column-count:2] [column-gap:1rem] mt-6">
               {reviews.filter((r) => r.comment && r.comment.trim().length > 0).map((review) => {

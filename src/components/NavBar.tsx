@@ -28,7 +28,7 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
                 <path d="M14.5 18L8 11L14.5 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </span>
-            Back
+            Voltar
           </button>
         ) : (
           <p className="text-[10px] sm:text-xs text-white leading-tight line-clamp-2">
@@ -65,9 +65,9 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
               router.push("/");
             }
           }}>Home</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Profile</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Perfil</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews?mode=following")}>Following</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews?mode=following")}>Seguindo</Button>
           {showLogout && <LogoutDialog />}
         </div>
 
@@ -91,9 +91,9 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
                   router.push("/");
                 }
               }}>Home</button>
-              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Profile</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Perfil</button>
               <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews"); setMenuOpen(false); }}>Reviews</button>
-              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews?mode=following"); setMenuOpen(false); }}>Following</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews?mode=following"); setMenuOpen(false); }}>Seguindo</button>
               {showLogout && (
                 <div className="px-2 pt-1 border-t border-border mt-1">
                   <LogoutDialog />

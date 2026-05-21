@@ -106,15 +106,15 @@ export function EditProfileDialog({
         avatar_id: resp.data?.avatar_id ?? "",
         cover_id: resp.data?.cover_id ?? "",
       });
-      toast.success("Profile updated!");
+      toast.success("Perfil atualizado!");
       setOpen(false);
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 422) {
-        toast.error("Invalid profile data. Check name/bio and try again.");
+        toast.error("Dados inválidos. Verifique o nome/bio e tente novamente.");
         return;
       }
-      toast.error("Error updating profile.");
+      toast.error("Erro ao atualizar perfil.");
     }
   }
 
@@ -122,18 +122,18 @@ export function EditProfileDialog({
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         <button className="text-sm text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-1 transition-colors">
-          Edit Profile
+          Editar Perfil
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogTitle>Editar Perfil</DialogTitle>
         </DialogHeader>
         <div className="space-y-5 py-2">
 
           {/* Name */}
           <div>
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium">Nome</label>
             <input
               type="text"
               value={name}
@@ -145,17 +145,17 @@ export function EditProfileDialog({
 
           {/* Pronouns */}
           <div>
-            <label className="text-sm font-medium">Pronouns</label>
+            <label className="text-sm font-medium">Pronomes</label>
             <select
               value={pronouns}
               onChange={(e) => setPronouns(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm"
             >
-              <option value="">Select...</option>
-              <option value="he/him">he/him</option>
-              <option value="she/her">she/her</option>
-              <option value="they/them">they/them</option>
-              <option value="prefer not to say">prefer not to say</option>
+              <option value="">Selecionar...</option>
+              <option value="he/him">ele/dele</option>
+              <option value="she/her">ela/dela</option>
+              <option value="they/them">elu/delu</option>
+              <option value="prefer not to say">prefiro não dizer</option>
             </select>
           </div>
 
@@ -166,7 +166,7 @@ export function EditProfileDialog({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               className="w-full mt-1 px-3 py-2 rounded-md border border-input bg-background text-sm min-h-20"
-              placeholder="Tell us about yourself..."
+              placeholder="Fale sobre você..."
               maxLength={200}
             />
             <p className="text-xs text-muted-foreground mt-1">{bio.length}/200</p>
@@ -174,7 +174,7 @@ export function EditProfileDialog({
 
           {/* Favorite Genres */}
           <div>
-            <label className="text-sm font-medium">Favorite Genres <span className="text-muted-foreground font-normal">(max 5)</span></label>
+            <label className="text-sm font-medium">Gêneros Favoritos <span className="text-muted-foreground font-normal">(máx 5)</span></label>
             <div className="flex flex-wrap gap-2 mt-2">
               {GENRE_OPTIONS.map((genre) => (
                 <button
@@ -195,7 +195,7 @@ export function EditProfileDialog({
 
           {/* Avatar */}
           <div>
-            <label className="text-sm font-medium">Avatar Color</label>
+            <label className="text-sm font-medium">Cor do Avatar</label>
             <div className="flex gap-3 mt-2">
               {avatarOptions.map((opt) => (
                 <button
@@ -212,7 +212,7 @@ export function EditProfileDialog({
 
           {/* Cover */}
           <div>
-            <label className="text-sm font-medium">Cover</label>
+            <label className="text-sm font-medium">Capa</label>
             <div className="grid grid-cols-3 gap-2 mt-2">
               {coverOptions.map((opt) => (
                 <button
@@ -229,8 +229,8 @@ export function EditProfileDialog({
 
           {/* Save */}
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave}>Salvar Alterações</Button>
           </div>
         </div>
       </DialogContent>

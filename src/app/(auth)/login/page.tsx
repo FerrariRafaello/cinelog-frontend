@@ -39,8 +39,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "E-mail ou senha incorretos.");
+    } catch {
+      setError("E-mail ou senha incorretos.");
     } finally {
       setLoading(false);
     }

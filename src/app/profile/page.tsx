@@ -194,7 +194,7 @@ function ProfileContent() {
           await api.delete(`/v1/reviews/${reviewId}`);
           setReviews(reviews.filter((r) => r.id !== reviewId));
       }catch {
-          toast.error("Error deleting review.");
+          toast.error("Erro ao excluir crítica.");
       }
     }
 
@@ -209,9 +209,9 @@ function ProfileContent() {
         if (profileUserId) {
           fetchReviews(profileUserId);
         }
-        toast.success("Review updated!");
+        toast.success("Crítica atualizada!");
       }catch {
-        toast.error("Error updating review")
+        toast.error("Erro ao atualizar crítica.")
       }
     }
 
@@ -221,7 +221,7 @@ function ProfileContent() {
           await api.delete(`/v1/watchlist/${itemId}`);
           setWatchlist(watchlist.filter((w) => w.id !== itemId));
       }catch{
-          toast.error("Error removing from watchlist.");
+          toast.error("Erro ao remover da lista.");
       }
     }
 
@@ -232,15 +232,15 @@ function ProfileContent() {
         setWatchlist(watchlist.map((w) => 
           w.id === itemId ? { ...w, status: newStatus as WatchlistItem["status"] } : w
         ));
-        toast.success("Status updated!");
+        toast.success("Status atualizado!");
       } catch {
-        toast.error("Error updating status.");
+        toast.error("Erro ao atualizar status.");
       }
     }
 
     async function handleDeleteProfile() {
       if (!viewerUserId) {
-        toast.error("Could not delete profile.");
+        toast.error("Não foi possível excluir o perfil.");
         return;
       }
 
@@ -251,7 +251,7 @@ function ProfileContent() {
         setDeleteOpen(false);
         router.push("/login");
       } catch {
-        toast.error("Could not delete profile.");
+        toast.error("Não foi possível excluir o perfil.");
       } finally {
         setDeletingProfile(false);
       }
@@ -300,7 +300,7 @@ function ProfileContent() {
 
     if (!checked) return (
         <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-muted-foreground">Carregando...</div>
       </div>
       );
 
@@ -346,7 +346,7 @@ function ProfileContent() {
                   className="h-10"
                   onClick={() => setDeleteOpen(true)}
                 >
-                  Delete Profile
+                  Excluir Perfil
                 </Button>
               </div>
             ) : (
@@ -378,14 +378,14 @@ function ProfileContent() {
           <div className="flex items-center gap-6 pt-2 flex-wrap">
             <div>
               <p className="text-3xl font-bold">{reviews.length}</p>
-              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Reviews</p>
+              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Críticas</p>
             </div>
             {isOwnProfile && (
               <>
                 <div className="w-px h-10 bg-border" />
                 <div>
                   <p className="text-3xl font-bold">{watchlist.length}</p>
-                  <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Watchlist</p>
+                  <p className="text-sm text-muted-foreground uppercase tracking-widest mt-0.5">Lista</p>
                 </div>
               </>
             )}
@@ -413,10 +413,10 @@ function ProfileContent() {
         {/* Reviews */}
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-bold">{isOwnProfile ? "My Reviews" : "Reviews"}</h3>
-            <span className="text-sm text-muted-foreground">{reviews.length} reviews</span>
+            <h3 className="text-2xl font-bold">{isOwnProfile ? "Minhas Críticas" : "Críticas"}</h3>
+            <span className="text-sm text-muted-foreground">{reviews.length} críticas</span>
           </div>
-          {reviews.length === 0 && <p className="text-muted-foreground text-base">No reviews yet.</p>}
+          {reviews.length === 0 && <p className="text-muted-foreground text-base">Sem críticas ainda.</p>}
           <div className="relative group/reviews">
             <div
               className={`absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity ${reviewsCanScrollLeft ? 'group-hover/reviews:opacity-100' : ''} opacity-0`}
@@ -441,17 +441,17 @@ function ProfileContent() {
                           value={editRating}
                           onChange={(e) => setEditRating(e.target.value)}
                           className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm"
-                          placeholder="Rating (0-10)"
+                          placeholder="Nota (0-10)"
                         />
                         <textarea
                           value={editComment}
                           onChange={(e) => setEditComment(e.target.value)}
                           className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm min-h-16"
-                          placeholder="Comment (optional)"
+                          placeholder="Comentário (opcional)"
                         />
                         <div className="flex gap-1">
-                          <Button size="sm" className="h-8 flex-1" onClick={() => handleUpdateReview(review.id)}>Save</Button>
-                          <Button size="sm" variant="ghost" className="h-8 flex-1" onClick={() => setEditingReviewId(null)}>Cancel</Button>
+                          <Button size="sm" className="h-8 flex-1" onClick={() => handleUpdateReview(review.id)}>Salvar</Button>
+                          <Button size="sm" variant="ghost" className="h-8 flex-1" onClick={() => setEditingReviewId(null)}>Cancelar</Button>
                         </div>
                       </div>
                     ) : (
@@ -464,7 +464,7 @@ function ProfileContent() {
                               className="w-full aspect-[2/3] object-cover"
                             />
                           ) : (
-                            <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">No image</div>
+                            <div className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm">Sem imagem</div>
                           )}
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/60 to-transparent px-3 pb-3 pt-10">
                             <p className="text-white text-base font-bold line-clamp-2 leading-tight">{movieInfo[review.tmdb_movie_id]?.title || `Movie #${review.tmdb_movie_id}`}</p>
@@ -482,8 +482,8 @@ function ProfileContent() {
                               setEditingReviewId(review.id);
                               setEditRating(String(review.rating));
                               setEditComment(review.comment || "");
-                            }}>Edit</Button>
-                            <Button size="sm" variant="destructive" className="text-xs h-7 flex-1" onClick={() => handleDeleteReview(review.id)}>Delete</Button>
+                            }}>Editar</Button>
+                            <Button size="sm" variant="destructive" className="text-xs h-7 flex-1" onClick={() => handleDeleteReview(review.id)}>Excluir</Button>
                           </div>
                         )}
                       </div>
@@ -499,10 +499,10 @@ function ProfileContent() {
         {isOwnProfile && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-2xl font-bold">My Watchlist</h3>
+              <h3 className="text-2xl font-bold">Minha Lista</h3>
               <span className="text-sm text-muted-foreground">{watchlist.length} filmes</span>
             </div>
-            {watchlist.length === 0 && <p className="text-muted-foreground text-base">Watchlist is empty.</p>}
+            {watchlist.length === 0 && <p className="text-muted-foreground text-base">Lista vazia.</p>}
             <div className="relative group/watchlist">
               <div
                 className={`absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-start cursor-pointer bg-gradient-to-r from-background/90 to-transparent transition-opacity ${watchlistCanScrollLeft ? 'group-hover/watchlist:opacity-100' : ''} opacity-0`}
@@ -531,7 +531,7 @@ function ProfileContent() {
                         <div
                           className="w-full aspect-[2/3] bg-muted flex items-center justify-center text-muted-foreground text-sm cursor-pointer"
                           onClick={() => router.push(`/movies/${item.tmdb_movie_id}`)}
-                        >No image</div>
+                        >Sem imagem</div>
                       )}
                       <div className="p-3 space-y-2">
                         <p className="text-base font-semibold line-clamp-1">{movieInfo[item.tmdb_movie_id]?.title || `Movie #${item.tmdb_movie_id}`}</p>
@@ -540,13 +540,13 @@ function ProfileContent() {
                           onChange={(e) => handleUpdateWatchlistStatus(item.id, e.target.value)}
                           className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-sm"
                         >
-                          <option value="want_to_watch">Want to watch</option>
-                          <option value="watching">Watching</option>
-                          <option value="watched">Watched</option>
-                          <option value="dropped">Dropped</option>
+                          <option value="want_to_watch">Quero assistir</option>
+                          <option value="watching">Assistindo</option>
+                          <option value="watched">Assistido</option>
+                          <option value="dropped">Abandonado</option>
                         </select>
                         <Button variant="destructive" size="sm" className="w-full text-sm h-8" onClick={() => handleRemoveWatchlist(item.id)}>
-                          Remove
+                          Remover
                         </Button>
                       </div>
                     </div>
@@ -561,17 +561,17 @@ function ProfileContent() {
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Profile</DialogTitle>
+            <DialogTitle>Excluir Perfil</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete your profile?
+              Tem certeza que deseja excluir seu perfil?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDeleteOpen(false)} disabled={deletingProfile}>
-              No
+              Não
             </Button>
             <Button variant="destructive" onClick={handleDeleteProfile} disabled={deletingProfile}>
-              {deletingProfile ? "Deleting..." : "Yes"}
+              {deletingProfile ? "Excluindo..." : "Sim"}
             </Button>
           </DialogFooter>
         </DialogContent>

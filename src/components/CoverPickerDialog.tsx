@@ -30,12 +30,12 @@ export function CoverPickerDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button className={`h-48 ${currentGradient} w-full cursor-pointer hover:opacity-90 transition-opacity relative`}>
-          <span className="absolute bottom-2 right-4 text-white/60 text-xs">Click to change cover</span>
+          <span className="absolute bottom-2 right-4 text-white/60 text-xs">Clique para alterar a capa</span>
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Choose your cover</DialogTitle>
+          <DialogTitle>Escolha sua capa</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3 py-4">
           {coverOptions.map((opt) => (
