@@ -282,7 +282,7 @@ function ProfileContent() {
       if (!profileUserId) return;
       try {
         const resp = await api.get(`/v1/users/${profileUserId}/followers`);
-        setFollowersList(resp.data || []);
+        setFollowersList(resp.data.data || []);
       } catch {
         setFollowersList([]);
       }
@@ -292,7 +292,7 @@ function ProfileContent() {
       if (!profileUserId) return;
       try {
         const resp = await api.get(`/v1/users/${profileUserId}/following`);
-        setFollowingList(resp.data || []);
+        setFollowingList(resp.data.data || []);
       } catch {
         setFollowingList([]);
       }

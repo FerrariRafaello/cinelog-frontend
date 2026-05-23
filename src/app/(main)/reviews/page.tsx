@@ -109,7 +109,7 @@ function ReviewsContent() {
     setLoadingTrending(true);
     try {
       const resp = await api.get("/v1/reviews/feed", { params: { sort: "popular", limit: 20 } });
-      const data: ReviewFull[] = resp.data || [];
+      const data: ReviewFull[] = resp.data.data || [];
       setTrending(data);
       fetchMovieInfos(data.map((r) => r.tmdb_movie_id));
     } catch {
@@ -133,7 +133,7 @@ function ReviewsContent() {
       }
 
       const resp = await api.get("/v1/reviews/feed", { params });
-      const data: ReviewFull[] = resp.data || [];
+      const data: ReviewFull[] = resp.data.data || [];
       setReviews(data);
       fetchMovieInfos(data.map((r) => r.tmdb_movie_id));
     } catch {
