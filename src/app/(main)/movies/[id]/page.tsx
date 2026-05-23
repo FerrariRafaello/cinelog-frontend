@@ -26,6 +26,7 @@ export default function MoviePage() {
     const [currentUserId, setCurrentUserId]=useState<number | null>(null);
     const [credits, setCredits]=useState<{cast:any[], crew:any[]}>({cast: [], crew: []});
     const [trailer, setTrailer]=useState<string | null>(null);
+    const [trailerOpen, setTrailerOpen]=useState(false);
     const [providers, setProviders]=useState<any[]>([]);
     const [inWatchlist, setInWatchlist]=useState(false);
     const [watchlistItemId, setWatchlistItemId]=useState<number | null>(null);
@@ -239,6 +240,17 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
       }
     }
 
+    useEffect(() => {
+      if (!trailerOpen) return;
+      function onKey(e: KeyboardEvent) { if (e.key === "Escape") setTrailerOpen(false); }
+      document.addEventListener("keydown", onKey);
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.removeEventListener("keydown", onKey);
+        document.body.style.overflow = "";
+      };
+    }, [trailerOpen]);
+
     async function fetchVideos() {
       try{
         const resp=await api.get(`/v1/tmdb/movies/${id}/videos`);
@@ -312,9 +324,12 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
               )}
               <div className="flex flex-wrap gap-3">
                 {trailer && (
-                  <a href={`https://www.youtube.com/watch?v=${trailer}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors">
+                  <button
+                    onClick={() => setTrailerOpen(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-600 text-white text-sm sm:text-base font-medium hover:bg-red-700 transition-colors"
+                  >
                     ▶ Assistir Trailer
-                  </a>
+                  </button>
                 )}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
@@ -509,6 +524,34 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
           )}
         </section>
       </main>
+
+      {trailerOpen && trailer && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setTrailerOpen(false); }}
+        >
+          <div className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-zinc-950 shadow-2xl ring-1 ring-white/10">
+            <div className="flex items-center justify-between px-5 py-3 bg-zinc-900">
+              <button
+                onClick={() => setTrailerOpen(false)}
+                className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                ← Voltar
+              </button>
+              <p className="text-sm text-zinc-400 truncate max-w-xs">{movie.title} — Trailer</p>
+              <div className="w-16" />
+            </div>
+            <div className="aspect-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${trailer}?autoplay=1&rel=0`}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

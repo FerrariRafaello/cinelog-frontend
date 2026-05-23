@@ -80,6 +80,8 @@ function HomeContent() {
   const [featured, setFeatured] = useState<Movie[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredTrailer, setFeaturedTrailer] = useState<string | null>(null);
+  const [trailerOpen, setTrailerOpen] = useState(false);
+  const trailerOpenRef = useRef(false);
   const [featuredCredits, setFeaturedCredits] = useState<any[]>([]);
   const [featuredPaused, setFeaturedPaused] = useState(false);
   const [genreSort, setGenreSort] = useState<"desc" | "asc">("desc");
@@ -373,6 +375,7 @@ function HomeContent() {
     if (featuredPaused) return;
 
     const timer = setInterval(() => {
+      if (trailerOpenRef.current) return;
       setFeaturedIndex((prev) => (prev + 1) % featuredLengthRef.current);
     }, 6000);
     return () => clearInterval(timer);
@@ -400,6 +403,18 @@ function HomeContent() {
     }
     fetchFeaturedData();
   }, [featuredMovie?.id]);
+
+  useEffect(() => {
+    trailerOpenRef.current = trailerOpen;
+    if (!trailerOpen) return;
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") setTrailerOpen(false); }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [trailerOpen]);
 
   if (!checked || redirecting || initialLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -599,14 +614,12 @@ function HomeContent() {
                       <div className="mt-5 sm:mt-6 lg:mt-7 space-y-3">
                         <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 xs:gap-3 sm:gap-4">
                           {featuredTrailer && (
-                            <a
-                              href={`https://www.youtube.com/watch?v=${featuredTrailer}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              onClick={() => setTrailerOpen(true)}
                               className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-4 py-2.5 text-sm sm:text-base font-semibold text-white hover:bg-red-700 transition-colors"
                             >
-                              Assistir Trailer
-                            </a>
+                              ▶ Assistir Trailer
+                            </button>
                           )}
                           <Button
                             variant="secondary"
@@ -844,6 +857,34 @@ function HomeContent() {
           </div>
         </section>
       </main>
+
+      {trailerOpen && featuredTrailer && featuredMovie && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setTrailerOpen(false); }}
+        >
+          <div className="relative w-full max-w-4xl rounded-2xl overflow-hidden bg-zinc-950 shadow-2xl ring-1 ring-white/10">
+            <div className="flex items-center justify-between px-5 py-3 bg-zinc-900">
+              <button
+                onClick={() => setTrailerOpen(false)}
+                className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                ← Voltar
+              </button>
+              <p className="text-sm text-zinc-400 truncate max-w-xs">{featuredMovie.title} — Trailer</p>
+              <div className="w-16" />
+            </div>
+            <div className="aspect-video">
+              <iframe
+                src={`https://www.youtube.com/embed/${featuredTrailer}?autoplay=1&rel=0`}
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
