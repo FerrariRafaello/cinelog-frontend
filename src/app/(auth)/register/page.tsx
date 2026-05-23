@@ -15,6 +15,7 @@ export default function RegisterPage() {
         password: "",
     });
     const [error, setError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showTerms, setShowTerms] = useState(false);
@@ -80,6 +81,7 @@ export default function RegisterPage() {
         }
         setLoading(true);
         setError("");
+        setFieldErrors({});
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.email)) {
@@ -120,11 +122,17 @@ export default function RegisterPage() {
         } catch (error: any) {
             const status = error?.response?.status;
             const apiMessage = error?.response?.data?.error?.message;
+            const apiFields = error?.response?.data?.error?.fields as Record<string, string> | undefined;
 
             if (status === 409) {
               setError("E-mail ou CPF já cadastrado.");
             } else if (status === 422) {
-              setError(apiMessage || "Dados inválidos. Revise as informações.");
+              if (apiFields && Object.keys(apiFields).length > 0) {
+                setFieldErrors(apiFields);
+                setError(apiMessage || "Verifique os campos e tente novamente.");
+              } else {
+                setError(apiMessage || "Dados inválidos. Revise as informações.");
+              }
             } else {
               setError("Erro ao criar conta. Tente novamente.");
             }
@@ -160,19 +168,45 @@ export default function RegisterPage() {
               minLength={2}
               maxLength={50}
             />
+            {fieldErrors.name && <p className="text-xs mt-1 text-red-500">{fieldErrors.name}</p>}
           </div>
 
           <div>
             <label className="text-sm font-medium">Idade <span className="text-muted-foreground text-xs">(opcional)</span></label>
-            <input
-              type="number"
-              name="age"
-              value={form.age}
-              onChange={handleChange}
-              className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Sua idade"
-              min={1}
-            />
+            <div className="relative mt-1">
+              <input
+                type="number"
+                name="age"
+                value={form.age}
+                onChange={handleChange}
+                className="w-full px-3 py-3 pr-10 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                placeholder="Sua idade"
+                min={1}
+              />
+              <div className="absolute right-0 top-0 bottom-0 flex flex-col rounded-r-lg overflow-hidden border-l border-border/80">
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setForm((f) => ({ ...f, age: String(Math.max(1, (Number(f.age) || 0) + 1)) }))}
+                  className="flex-1 px-2.5 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-white/5 transition-colors border-b border-border/80"
+                >
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 5L5 1L9 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => setForm((f) => ({ ...f, age: f.age && Number(f.age) > 1 ? String(Number(f.age) - 1) : f.age }))}
+                  className="flex-1 px-2.5 flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-white/5 transition-colors"
+                >
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            {fieldErrors.age && <p className="text-xs mt-1 text-red-500">{fieldErrors.age}</p>}
           </div>
 
           <div>
@@ -189,6 +223,7 @@ export default function RegisterPage() {
             {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
               <p className="text-xs mt-1 text-red-500">Por favor, insira um e-mail válido.</p>
             )}
+            {fieldErrors.email && <p className="text-xs mt-1 text-red-500">{fieldErrors.email}</p>}
           </div>
 
           <div>
@@ -201,6 +236,7 @@ export default function RegisterPage() {
               className="w-full mt-1 px-3 py-3 rounded-lg border border-border/80 bg-background/80 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="000.000.000-00"
             />
+            {fieldErrors.cpf && <p className="text-xs mt-1 text-red-500">{fieldErrors.cpf}</p>}
           </div>
 
           <div>
@@ -228,6 +264,7 @@ export default function RegisterPage() {
                 Força da senha: {getPasswordStrength(form.password).label}
               </p>
             )}
+            {fieldErrors.password && <p className="text-xs mt-1 text-red-500">{fieldErrors.password}</p>}
           </div>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
