@@ -9,6 +9,7 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+
 export const viewport={
   width: "device-width",
   initialScale:1,
