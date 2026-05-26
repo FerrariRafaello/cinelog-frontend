@@ -17,12 +17,25 @@ export const viewport={
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://critcine.com"),
   title: "CritCine",
   description: "Movie rating platform",
   icons: {
     icon: "/icon.svg",
     shortcut: "/icon.svg",
     apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "CritCine",
+    description: "Movie rating platform",
+    url: "https://critcine.com",
+    siteName: "CritCine",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CritCine",
+    description: "Movie rating platform",
   },
 };
 
