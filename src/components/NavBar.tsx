@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog";
+import { NotificationPanel } from "@/components/NotificationPanel";
 
 interface NavBarProps {
   showBack?: boolean;
@@ -68,8 +69,16 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Perfil</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews?mode=following")}>Seguindo</Button>
+          {showLogout && <NotificationPanel />}
           {showLogout && <LogoutDialog />}
         </div>
+
+        {/* Mobile notification bell — visível apenas quando logado */}
+        {showLogout && (
+          <div className="xl:hidden">
+            <NotificationPanel />
+          </div>
+        )}
 
         {/* Mobile/tablet — hambúrguer até xl */}
         <div className="relative xl:hidden">

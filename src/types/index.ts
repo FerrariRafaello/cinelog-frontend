@@ -51,3 +51,15 @@ export interface AuthToken{
     access_token:string;
     token_type:string;
 }
+
+
+export interface Notification {
+    id: number;
+    from_user_id: number;
+    from_user_name: string;
+    from_user_avatar: string | null;
+    type: "follow" | "review_like";
+    entity_id: number | null;
+    read: boolean;
+    created_at: string;
+}
