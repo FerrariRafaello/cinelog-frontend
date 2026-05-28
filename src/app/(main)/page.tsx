@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NavBar } from "@/components/NavBar";
 import { MovieRow } from "@/components/MovieRow";
+import { PeopleRow, TrendingPerson } from "@/components/PeopleRow";
 import { GENRE_TO_ID } from "@/lib/genres";
 import { useInactivityLogout } from "@/hooks/useInactivityLogout";
 
@@ -77,6 +78,7 @@ function HomeContent() {
   const [forYou, setForYou] = useState<Movie[]>([]);
   const [forYouTitle, setForYouTitle] = useState("Populares Agora");
   const [classics, setClassics] = useState<Movie[]>([]);
+  const [trendingPeople, setTrendingPeople] = useState<TrendingPerson[]>([]);
   const [national, setNational] = useState<Movie[]>([]);
   const [critcineTop, setCritcineTop] = useState<Movie[]>([]);
   const [featured, setFeatured] = useState<Movie[]>([]);
@@ -235,6 +237,13 @@ function HomeContent() {
         setClassics(resp.data.results.slice(0, 40));
       } catch { setClassics([]); }
     }
+    async function fetchTrendingPeople() {
+      try {
+        const resp = await api.get("/v1/tmdb/trending-people");
+        const data = Array.isArray(resp.data) ? resp.data : (resp.data?.results ?? []);
+        setTrendingPeople(data.slice(0, 20));
+      } catch (e) { console.error("[trending-people]", e); setTrendingPeople([]); }
+    }
     async function fetchNational() {
       try {
         const resp = await api.get("/v1/tmdb/national");
@@ -263,6 +272,7 @@ function HomeContent() {
       fetchAnimation(),
       fetchForYou(),
       fetchClassics(),
+      fetchTrendingPeople(),
       fetchNational(),
       fetchCritcineTop(),
       fetchProviders(),
@@ -874,6 +884,7 @@ function HomeContent() {
               )}
               <MovieRow title="Vale Rever" movieList={topRated} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Animação" movieList={animation} nowPlayingIds={nowPlayingIds} />
+              <PeopleRow title="Atores em Alta" people={trendingPeople} />
               <MovieRow title="Clássicos" movieList={classics} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Filmes Nacionais" movieList={national} nowPlayingIds={nowPlayingIds} />
               {critcineTop.length > 0 && (
