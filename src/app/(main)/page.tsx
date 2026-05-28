@@ -64,7 +64,7 @@ function HomeContent() {
   }, [top10]);
   useInactivityLogout(() => router.push("/login"));
   const [query, setQuery] = useState("");
-  const [genreQuery, setGenreQuery] = useState("Action");
+  const [genreQuery, setGenreQuery] = useState("Ação");
   const [movies, setMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -77,6 +77,8 @@ function HomeContent() {
   const [forYou, setForYou] = useState<Movie[]>([]);
   const [forYouTitle, setForYouTitle] = useState("Populares Agora");
   const [classics, setClassics] = useState<Movie[]>([]);
+  const [national, setNational] = useState<Movie[]>([]);
+  const [critcineTop, setCritcineTop] = useState<Movie[]>([]);
   const [featured, setFeatured] = useState<Movie[]>([]);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredTrailer, setFeaturedTrailer] = useState<string | null>(null);
@@ -86,6 +88,9 @@ function HomeContent() {
   const [featuredPaused, setFeaturedPaused] = useState(false);
   const [genreSort, setGenreSort] = useState<"desc" | "asc">("desc");
   const [showGenreResults, setShowGenreResults] = useState(false);
+  const [genreNextPage, setGenreNextPage] = useState(7);
+  const [loadingMoreGenre, setLoadingMoreGenre] = useState(false);
+  const [hasMoreGenre, setHasMoreGenre] = useState(false);
   const nowPlayingIds = new Set(
     nowPlaying
       .filter((m) => {
@@ -230,6 +235,18 @@ function HomeContent() {
         setClassics(resp.data.results.slice(0, 40));
       } catch { setClassics([]); }
     }
+    async function fetchNational() {
+      try {
+        const resp = await api.get("/v1/tmdb/national");
+        setNational(resp.data.results.slice(0, 40));
+      } catch { setNational([]); }
+    }
+    async function fetchCritcineTop() {
+      try {
+        const resp = await api.get("/v1/tmdb/critcine-top");
+        setCritcineTop(resp.data.results.slice(0, 10));
+      } catch { setCritcineTop([]); }
+    }
     async function fetchProviders() {
       try {
         const resp = await api.get("/v1/tmdb/providers");
@@ -246,6 +263,8 @@ function HomeContent() {
       fetchAnimation(),
       fetchForYou(),
       fetchClassics(),
+      fetchNational(),
+      fetchCritcineTop(),
       fetchProviders(),
     ]).finally(() => {
       setInitialLoading(false);
@@ -344,6 +363,8 @@ function HomeContent() {
 
       const normalizedMovies = normalizeMovieResults(unique).slice(0, 120);
       setMovies(normalizedMovies);
+      setGenreNextPage(7);
+      setHasMoreGenre(normalizedMovies.length > 0);
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem(cacheKey, JSON.stringify(normalizedMovies));
@@ -427,6 +448,7 @@ function HomeContent() {
     if (!query.trim()) return;
     setLoading(true);
     setShowGenreResults(false);
+    setHasMoreGenre(false);
     router.push(`/?q=${encodeURIComponent(query)}`);
     try {
       const resp = await api.get("/v1/tmdb/search", { params: { q: query } });
@@ -443,6 +465,44 @@ function HomeContent() {
     await fetchMoviesByGenre(genreQuery, true);
   }
 
+  async function loadMoreGenreResults() {
+    const normalized = genreQuery.trim();
+    const genreId = GENRE_TO_ID[normalized];
+    if (!genreId) return;
+    setLoadingMoreGenre(true);
+    try {
+      const pages = Array.from({ length: 6 }, (_, i) => genreNextPage + i);
+      const responses = await Promise.all(
+        pages.map((page) =>
+          api.get("/v1/tmdb/discover", {
+            params: { with_genres: genreId, sort_by: "release_date.desc", page },
+          })
+        )
+      );
+      const newMovies: Movie[] = responses.flatMap((r) => r.data.results || []);
+      if (newMovies.length === 0) {
+        setHasMoreGenre(false);
+        return;
+      }
+      setMovies((prev) => {
+        const existingIds = new Set(prev.map((m) => m.id));
+        const unique = normalizeMovieResults(
+          newMovies.filter((m) => !existingIds.has(m.id))
+        ).sort((a: any, b: any) =>
+          genreSort === "desc"
+            ? b.vote_average - a.vote_average
+            : a.vote_average - b.vote_average
+        );
+        return [...prev, ...unique];
+      });
+      setGenreNextPage((p) => p + 6);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingMoreGenre(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <NavBar showLogout />
@@ -457,21 +517,22 @@ function HomeContent() {
                   onChange={(e) => setGenreQuery(e.target.value)}
                   className="h-full w-full rounded-lg border border-border/70 bg-background px-3 text-sm sm:text-base"
                 >
-                  <option>Action</option>
-                  <option>Adventure</option>
-                  <option>Animation</option>
-                  <option>Comedy</option>
+                  <option>Ação</option>
+                  <option>Aventura</option>
+                  <option>Animação</option>
+                  <option>Comédia</option>
                   <option>Crime</option>
-                  <option>Documentary</option>
+                  <option>Documentário</option>
                   <option>Drama</option>
-                  <option>Family</option>
-                  <option>Fantasy</option>
-                  <option>Horror</option>
-                  <option>Mystery</option>
+                  <option>Família</option>
+                  <option>Fantasia</option>
+                  <option>Terror</option>
+                  <option>Musical</option>
+                  <option>Mistério</option>
                   <option>Romance</option>
-                  <option>Sci-Fi</option>
-                  <option>Thriller</option>
-                  <option>War</option>
+                  <option>Ficção Científica</option>
+                  <option>Suspense</option>
+                  <option>Guerra</option>
                 </select>
               </div>
               <div className="h-12 sm:h-14 rounded-xl border border-border bg-card/70 p-1 sm:w-auto">
@@ -551,6 +612,18 @@ function HomeContent() {
                 </div>
               ))}
             </div>
+            {showGenreResults && hasMoreGenre && (
+              <div className="flex justify-center pt-4 pb-2">
+                <Button
+                  variant="outline"
+                  onClick={loadMoreGenreResults}
+                  disabled={loadingMoreGenre}
+                  className="px-8 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  {loadingMoreGenre ? "Carregando..." : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -802,6 +875,10 @@ function HomeContent() {
               <MovieRow title="Vale Rever" movieList={topRated} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Animação" movieList={animation} nowPlayingIds={nowPlayingIds} />
               <MovieRow title="Clássicos" movieList={classics} nowPlayingIds={nowPlayingIds} />
+              <MovieRow title="Filmes Nacionais" movieList={national} nowPlayingIds={nowPlayingIds} />
+              {critcineTop.length > 0 && (
+                <MovieRow title="Recomendações CritCine" movieList={critcineTop} nowPlayingIds={nowPlayingIds} />
+              )}
             </div>
           </>
         )}

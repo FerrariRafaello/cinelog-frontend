@@ -14,9 +14,9 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 
 const GENRE_OPTIONS = [
-  "Action", "Adventure", "Animation", "Comedy", "Crime",
-  "Documentary", "Drama", "Family", "Fantasy", "Horror",
-  "Mystery", "Romance", "Sci-Fi", "Thriller", "War",
+  "Ação", "Aventura", "Animação", "Comédia", "Crime",
+  "Documentário", "Drama", "Família", "Fantasia", "Terror",
+  "Musical", "Mistério", "Romance", "Ficção Científica", "Suspense", "Guerra",
 ];
 
 interface EditProfileProps {

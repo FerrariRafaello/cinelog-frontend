@@ -2,9 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import { Button } from "@/components/ui/button";
 import { LogoutDialog } from "@/components/LogoutDialog";
 import { NotificationPanel } from "@/components/NotificationPanel";
+
+function getMyUserId(): number | null {
+  try {
+    const token = Cookies.get("token");
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return parseInt(payload.sub);
+  } catch {
+    return null;
+  }
+}
 
 interface NavBarProps {
   showBack?: boolean;
@@ -66,7 +78,7 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
               router.push("/");
             }
           }}>Home</Button>
-          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/profile")}>Perfil</Button>
+          <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => { const id = getMyUserId(); router.push(id ? `/profile?user=${id}` : "/profile"); }}>Perfil</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews")}>Reviews</Button>
           <Button variant="ghost" className="rounded-full border border-border/70 bg-card/80 px-3 py-2 text-sm font-medium hover:border-primary hover:bg-card transition-colors" onClick={() => router.push("/reviews?mode=following")}>Seguindo</Button>
           {showLogout && <NotificationPanel />}
@@ -100,7 +112,7 @@ export function NavBar({ showBack = false, showLogout = false }: NavBarProps) {
                   router.push("/");
                 }
               }}>Home</button>
-              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/profile"); setMenuOpen(false); }}>Perfil</button>
+              <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { const id = getMyUserId(); router.push(id ? `/profile?user=${id}` : "/profile"); setMenuOpen(false); }}>Perfil</button>
               <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews"); setMenuOpen(false); }}>Reviews</button>
               <button className="px-4 py-2.5 text-sm text-left rounded-lg hover:bg-muted" onClick={() => { router.push("/reviews?mode=following"); setMenuOpen(false); }}>Seguindo</button>
               {showLogout && (
