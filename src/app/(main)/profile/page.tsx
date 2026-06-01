@@ -450,6 +450,7 @@ function ProfileContent() {
                           onChange={(e) => setEditComment(e.target.value)}
                           className="w-full px-2 py-1 rounded-md border border-input bg-background text-sm min-h-16"
                           placeholder="Comentário (opcional)"
+                          autoComplete="off"
                         />
                         <div className="flex gap-1">
                           <Button size="sm" className="h-8 flex-1" onClick={() => handleUpdateReview(review.id)}>Salvar</Button>

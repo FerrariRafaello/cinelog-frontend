@@ -460,6 +460,7 @@ const [reviewerNames, setReviewerNames]=useState<Record<number, string>>({});;
               onChange={(e) => setComment(e.target.value)}
               placeholder="Escreva sua crítica... (opcional)"
               maxLength={500}
+              autoComplete="off"
               className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-base sm:text-lg min-h-24"
             />
             <p className={`text-sm text-right mt-1 ${comment.length >= 480 ? "text-destructive" : "text-muted-foreground"}`}>
